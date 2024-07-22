@@ -1,10 +1,17 @@
+import random
 import unittest
 
-from S_DES import *
+from classical.S_DES import *
 
+
+# noinspection PyMethodMayBeStatic
 class S_DES_Test(unittest.TestCase):
-    def test_key_generation(self):
-        initial_key = tuple(i + 1 for i in range(10))
-        K1, K2 = generate_sub_keys(initial_key)
+    def test_sdes(self):
+        for _ in range(50):
+            bits = tuple(to_bits(random.randint(0, 2 ** 8 - 1), 8))
+            key = tuple(to_bits(random.randint(0, 2 ** 10 - 1), 10))
 
-        print(K1, K2)
+            encrypted = encrypt(bits, key)
+            decrypted = decrypt(encrypted, key)
+
+            self.assertEqual(bits, decrypted)
