@@ -3,7 +3,7 @@ import itertools
 
 # Define the Pauli-Z operator
 def pauli_z(state, i):
-    state[i] = 1 - state[i]  # Toggle the bit (0 becomes 1, 1 becomes 0)
+    state[i] = 1 - state[i]  # Toggle state, flips 180
     return state
 
 # Define the Hamiltonian components
