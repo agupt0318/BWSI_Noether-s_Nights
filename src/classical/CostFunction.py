@@ -1,17 +1,20 @@
 import numpy as np
-import itertools
+
 
 # Define the Pauli-Z operator
 def pauli_z(state, i):
     state[i] = 1 - state[i]  # Toggle state, flips 180
     return state
 
+
 # Define the Hamiltonian components
 def compute_wij(Vi, Vj):
     return 1 if Vi != Vj else -1
 
+
 def compute_ti(Vi):
     return 0.5 if Vi == 1 else -0.5
+
 
 # Generate all possible edges for a given regularity
 def generate_regular_graph_edges(n, num_nodes):
@@ -26,15 +29,16 @@ def generate_regular_graph_edges(n, num_nodes):
             edges.append((node, target))
     return edges
 
+
 # Construct the Hamiltonian for a given regular graph
 def construct_hamiltonian(V, edges):
     num_nodes = len(V)
-    H = np.zeros((2**num_nodes, 2**num_nodes))
-    
+    H = np.zeros((2 ** num_nodes, 2 ** num_nodes))
+
     # Add terms wij Zi Zj
     for (i, j) in edges:
         wij = compute_wij(V[i], V[j])
-        for state_idx in range(2**num_nodes):
+        for state_idx in range(2 ** num_nodes):
             state = list(map(int, bin(state_idx)[2:].zfill(num_nodes)))
             new_state = pauli_z(state[:], i)
             new_state = pauli_z(new_state, j)
@@ -44,13 +48,14 @@ def construct_hamiltonian(V, edges):
     # Add single-qubit terms ti Zi
     for i in range(num_nodes):
         ti = compute_ti(V[i])
-        for state_idx in range(2**num_nodes):
+        for state_idx in range(2 ** num_nodes):
             state = list(map(int, bin(state_idx)[2:].zfill(num_nodes)))
             new_state = pauli_z(state[:], i)
             new_state_idx = int(''.join(map(str, new_state)), 2)
             H[state_idx, new_state_idx] += ti
 
     return H
+
 
 # Energy level analysis for different regularities
 def energy_level_analysis(V, num_nodes=8):
@@ -65,6 +70,7 @@ def energy_level_analysis(V, num_nodes=8):
         ratio = (first_excited_energy - ground_energy) / (highest_energy - ground_energy)
         results.append((n, ground_energy, highest_energy, first_excited_energy, ratio))
     return results
+
 
 # Example usage
 V = [1, 0, 1, 1, 1, 0, 1, 0]  # Example ciphertext values

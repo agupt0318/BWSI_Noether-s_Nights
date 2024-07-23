@@ -1,11 +1,12 @@
-#psuedocode basis is from Appendix C of the paper A Variational Quantum Attack for AES-like
-#Symmetric Cryptography (Wang et al., 2022)
+# psuedocode basis is from Appendix C of the paper A Variational Quantum Attack for AES-like
+# Symmetric Cryptography (Wang et al., 2022)
 import numpy as np
 
-def gradient_descent(x0,function, r, xerr):
-    #x0: initial point (minimum expectation of the Hamiltonian from N+1 points) -- int
-    #function: the function
-    #r: the learning rate -- float
+
+def gradient_descent(x0, function, r, xerr):
+    # x0: initial point (minimum expectation of the Hamiltonian from N+1 points) -- int
+    # function: the function
+    # r: the learning rate -- float
     count = 0
     length = len(x0)
     for ii in range(1024):
@@ -24,8 +25,9 @@ def gradient_descent(x0,function, r, xerr):
         r0 = np.random.uniform(0, 1)
         x0 -= (r / abs(cost) + np.log(count) / count * r0) * gd
         if gd < 0.8:
-            x0 = np.random.uniform(-1,1,length)
+            x0 = np.random.uniform(-1, 1, length)
     return x0
+
 
 def n_m_method(function, x0, alpha, xerr):
     N = len(x0)
@@ -37,9 +39,9 @@ def n_m_method(function, x0, alpha, xerr):
         else:
             xi[i] = x0[i] * alpha
         points.append(xi)
-    times = N+1
-    while times<1024:
-        points.sort(key = lambda x:function(x))
+    times = N + 1
+    while times < 1024:
+        points.sort(key=lambda x: function(x))
         if function(points[0]) <= xerr:
             break
         if function(points[-1]) - function(points[1]) < 0.15:
@@ -49,12 +51,12 @@ def n_m_method(function, x0, alpha, xerr):
                     xi[i] = 0.8
                 else:
                     xi[i] = x0[i] * alpha
-                points[i+1] = xi
+                points[i + 1] = xi
             continue
         m = np.mean(points[:-1], axis=0)
         r = 2 * m - points[-1]
         times += 1
-        if(function(points[0]) <= function(r) < function(points[-2])):
+        if (function(points[0]) <= function(r) < function(points[-2])):
             points[-1] = r
             continue
         if function(r) < function(points[0]):
@@ -73,7 +75,7 @@ def n_m_method(function, x0, alpha, xerr):
                 points[-1] = c1
                 continue
             else:
-                for i in range(1, N+1):
+                for i in range(1, N + 1):
                     points[i] = x0 + (points[i] - x0) / 2.0
                 times += N
                 continue
@@ -84,17 +86,8 @@ def n_m_method(function, x0, alpha, xerr):
                 points[-1] = c2
                 continue
             else:
-                for i in range(1, N+1):
+                for i in range(1, N + 1):
                     points[i] = x0 + (points[i] - x0) / 2.0
                 times += N
                 continue
     return points[0]
-
-
-            
-            
-
-
-
-
-
