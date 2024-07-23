@@ -56,9 +56,11 @@ def n_m_method(function, x0, alpha, xerr):
         m = np.mean(points[:-1], axis=0)
         r = 2 * m - points[-1]
         times += 1
+
         if (function(points[0]) <= function(r) < function(points[-2])):
             points[-1] = r
             continue
+
         if function(r) < function(points[0]):
             s = m + 2 * (m - points[-1])
             times += 1
