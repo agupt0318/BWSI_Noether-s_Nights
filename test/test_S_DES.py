@@ -5,7 +5,7 @@ import numpy as np
 from qiskit.quantum_info import Statevector
 
 from classical.S_DES import *
-from quantum.possible import QuantumS_DES
+from quantum.S_DES import QuantumS_DES
 
 
 # noinspection PyMethodMayBeStatic
