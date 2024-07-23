@@ -15,7 +15,7 @@ def compute_wij(Vi, Vj):
 def compute_ti(Vi):
     return 0.5 if Vi == 1 else -0.5
 
-def make_edge_for_each_vertice_x_steps_away(edges, num_nodes, x):
+def make_edge_for_each_vertex_x_steps_away(edges, num_nodes, x):
     for i in range(num_nodes):
         u, v = i, (i + x) % num_nodes
         if (u, v) not in edges and (v, u) not in edges:
@@ -27,28 +27,28 @@ def make_edge_for_each_vertice_x_steps_away(edges, num_nodes, x):
 def generate_regular_graph_edges(n, num_nodes):
     edges = set()
     if n == 1:
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 4)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 4)
     elif n == 2:
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 1)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 1)
     elif n == 3:
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 4)
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 3)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 4)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 3)
     elif n == 4:
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 1)
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 2)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 1)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 2)
     elif n == 5:
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 4)
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 3)
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 2)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 4)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 3)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 2)
     elif n == 6:
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 1)
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 2)
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 3)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 1)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 2)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 3)
     elif n == 7:
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 4)
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 3)
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 2)
-        edges = make_edge_for_each_vertice_x_steps_away(edges, num_nodes, 1)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 4)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 3)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 2)
+        edges = make_edge_for_each_vertex_x_steps_away(edges, num_nodes, 1)
     return edges
 
 
