@@ -23,7 +23,7 @@ def make_edge_for_each_vertice_x_steps_away(edges, num_nodes, x):
     return edges
 
 # Generate all possible edges for a given regularity
-# Code was lovingly stolen from https://math.stackexchange.com/questions/142112/how-to-construct-a-k-regular-graph
+# Code was lovingly inspired by https://math.stackexchange.com/questions/142112/how-to-construct-a-k-regular-graph
 def generate_regular_graph_edges(n, num_nodes):
     edges = set()
     if n == 1:
