@@ -9,7 +9,7 @@ creg_c = ClassicalRegister(18, 'c')
 circuit = QuantumCircuit(qreg_key, qreg_data, creg_c)
 
 circuit.cx(qreg_key[5], qreg_data[5])
-circuit.CX(qreg_key[7], qreg_data[0])
+circuit.cx(qreg_key[7], qreg_data[0])
 circuit.cx(qreg_key[1], qreg_data[1])
 circuit.cx(qreg_key[6], qreg_data[2])
 circuit.barrier(qreg_key[0], qreg_key[1], qreg_key[2], qreg_key[3], qreg_key[4], qreg_key[5], qreg_key[6], qreg_key[7],
