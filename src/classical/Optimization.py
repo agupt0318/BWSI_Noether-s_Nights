@@ -1,4 +1,4 @@
-#code is from Appendix C of the paper A Variational Quantum Attack for AES-like
+#psuedocode basis is from Appendix C of the paper A Variational Quantum Attack for AES-like
 #Symmetric Cryptography (Wang et al., 2022)
 import numpy as np
 
@@ -40,7 +40,7 @@ def n_m_method(function, x0, alpha, xerr):
     times = N+1
     while times<1024:
         points.sort(key = lambda x:function(x))
-        if function(points[0]) < xerr:
+        if function(points[0]) <= xerr:
             break
         if function(points[-1]) - function(points[1]) < 0.15:
             for i in range(N):
