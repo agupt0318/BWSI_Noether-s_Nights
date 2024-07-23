@@ -1,7 +1,7 @@
 # second half: part 1
 
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
-from qiskit.circuit.library import C4XGate
+from qiskit.circuit.library import C4XGate, C3XGate
 
 qreg_key = QuantumRegister(10, 'key')
 qreg_data = QuantumRegister(8, 'data')
