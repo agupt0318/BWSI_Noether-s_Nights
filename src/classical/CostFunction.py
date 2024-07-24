@@ -1,10 +1,6 @@
 import numpy as np
 
-
-# Define the Pauli-Z operator
-def pauli_z(state, i):
-    state[i] = 1 - state[i]  # Toggle state, flips 180
-    return state
+from quantum.utils import Hamiltonian
 
 
 # Define the Hamiltonian components
@@ -15,12 +11,14 @@ def compute_wij(Vi, Vj):
 def compute_ti(Vi):
     return 0.5 if Vi == 1 else -0.5
 
+
 def make_edge_for_each_vertex_n_steps_away(edges, num_nodes, n):
     for i in range(num_nodes):
         u, v = i, (i + n) % num_nodes
         if (u, v) not in edges and (v, u) not in edges:
             edges.add((u, v))
     return edges
+
 
 # Generate all possible edges for a given regularity
 # Code was lovingly inspired by https://math.stackexchange.com/questions/142112/how-to-construct-a-k-regular-graph
@@ -53,31 +51,35 @@ def generate_regular_graph_edges(n, num_nodes):
 
 
 # Construct the Hamiltonian for a given regular graph
-def construct_hamiltonian(V, edges):
+def construct_hamiltonian(V, edges) -> Hamiltonian:
     num_nodes = len(V)
-    H = np.zeros((2 ** num_nodes, 2 ** num_nodes))
+
+    pair_terms: list[tuple[float, int, int]] = []
+    single_terms: list[tuple[float, int]] = []
 
     # Add terms wij Zi Zj
     for (i, j) in edges:
         wij = compute_wij(V[i], V[j])
-        for state_idx in range(2 ** num_nodes):
-            state = list(map(int, bin(state_idx)[2:].zfill(num_nodes)))
-            new_state = pauli_z(state[:], i)
-            new_state = pauli_z(new_state, j)
-            new_state_idx = int(''.join(map(str, new_state)), 2)
-            H[state_idx, new_state_idx] += wij
+        pair_terms.append((wij, i, j))
 
     # Add single-qubit terms ti Zi
     for i in range(num_nodes):
         ti = compute_ti(V[i])
-        for state_idx in range(2 ** num_nodes):
-            state = list(map(int, bin(state_idx)[2:].zfill(num_nodes)))
-            new_state = pauli_z(state[:], i)
-            new_state_idx = int(''.join(map(str, new_state)), 2)
-            H[state_idx, new_state_idx] += ti
+        single_terms.append((ti, i))
 
-    return H
+    def calculate_hamiltonian(measurement: list[float]) -> float:
+        result = 0
+        for (wij, i, j) in pair_terms:
+            result += wij * measurement[i] * measurement[j]
+        for (ti, i) in single_terms:
+            result += ti * measurement[i]
 
+        return result
+
+    return Hamiltonian(calculate_hamiltonian)
+
+
+# Low priority
 
 # Energy level analysis for different regularities
 def energy_level_analysis(V, num_nodes=8):
