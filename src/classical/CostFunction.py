@@ -75,7 +75,7 @@ def construct_hamiltonian(V, edges):
             new_state = pauli_z(state[:], i)
             new_state_idx = int(''.join(map(str, new_state)), 2)
             H[state_idx, new_state_idx] += ti
-
+    
     return H
 
 
