@@ -4,7 +4,6 @@ from typing import Callable
 
 import numpy as np
 
-
 def calculate_gradient_at_point(
         point: np.ndarray,
         cost_at_point: float,
@@ -43,7 +42,7 @@ def gradient_descent(
 
         cost_at_current_guess = cost_function(guess)
 
-        # If the cost is less than the cutoff, stop
+        # If the cost is strictly less than the cutoff, stop
         if cost_at_current_guess < cost_cutoff:
             return guess
         # Otherwise, update the current best guess

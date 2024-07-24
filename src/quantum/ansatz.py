@@ -1,4 +1,5 @@
 from qiskit import QuantumCircuit, QuantumRegister
+from qiskit.circuit import Parameter
 
 
 def A_ansatz_Y_Cx_model(theta_list):
@@ -25,7 +26,7 @@ def A_ansatz_Y_Cy_model(theta_list):
     return circuit
 
 
-def A_ansatz_Y_Cz_model(*theta_list):
+def A_ansatz_Y_Cz_model(theta_list: list[Parameter]):
     register = QuantumRegister(10)
     circuit = QuantumCircuit(register)
     for i in range(10):
