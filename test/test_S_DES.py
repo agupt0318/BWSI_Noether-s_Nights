@@ -2,7 +2,7 @@ import random
 import unittest
 
 import numpy as np
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.quantum_info import Statevector
 from qiskit_aer import AerSimulator
 
@@ -31,8 +31,11 @@ class S_DES_Test(unittest.TestCase):
             self.assertEqual(message, decrypted_message)
 
     def test_q_sdes(self):
-        q_sdes = QuantumS_DES()
+        key_register = QuantumRegister(10, name='key')
+        data_register = QuantumRegister(8, name='data')
+        q_sdes = QuantumS_DES(key_register, data_register)
 
+        # noinspection PyTypeChecker
         simulator = AerSimulator(method="statevector")
 
         for _ in range(25):

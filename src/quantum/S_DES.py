@@ -8,11 +8,13 @@ from qiskit.circuit.quantumcircuit import QubitSpecifier, ClbitSpecifier
 
 
 class QuantumS_DES(QuantumCircuit):
-    def __init__(self, use_debug_barriers=False):
+    def __init__(self, key: QuantumRegister, data: QuantumRegister, use_debug_barriers=False):
         self.use_debug_barriers = use_debug_barriers
+        self.key_register = key
+        self.data_register = data
 
-        key = self.key_register = QuantumRegister(10, name='key')
-        data = self.data_register = QuantumRegister(8, name='data')
+        assert len(key) == 10
+        assert len(data) == 8
 
         super().__init__(key, data)
 
@@ -163,5 +165,5 @@ class QuantumS_DES(QuantumCircuit):
 
 
 if __name__ == '__main__':
-    circuit = QuantumS_DES(use_debug_barriers=True)
+    circuit = QuantumS_DES(QuantumRegister(10), QuantumRegister(8), use_debug_barriers=True)
     circuit.debug_mpl()
