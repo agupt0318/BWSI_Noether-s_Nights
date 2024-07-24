@@ -123,7 +123,13 @@ def f_K(L: bitstring_4, R, key: bitstring_8) -> tuple[bitstring_4, bitstring_4]:
     return
 
 
-def encrypt(plaintext_bits: bitstring_8, key: bitstring_10) -> bitstring_8:
+def encrypt_sdes(plaintext_bits: bitstring_8, key: bitstring_10) -> bitstring_8:
+    """
+    Encrypts a plaintext with the S-DES symmetric encryption algorithm
+    :param plaintext_bits:  The plaintext to be encrypted, in little-endian order
+    :param key:             The key used to encrypt the plaintext, in little-endian order
+    :return:                The encrypted plaintext, in little-endian order
+    """
     K1, K2 = generate_sub_keys(key)
 
     L, R = split_8_to_4(IP(plaintext_bits))
