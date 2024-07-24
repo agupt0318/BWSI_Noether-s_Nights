@@ -11,7 +11,7 @@ def calculate_gradient_at_point(
         cost_function: Callable[[np.ndarray], float],
         num_dimensions
 ):
-    epsilon = 0.01
+    epsilon = 0.01 # small step size for calculating the approximate gradient
 
     gradient = np.zeros(num_dimensions)
     for i in range(num_dimensions):
