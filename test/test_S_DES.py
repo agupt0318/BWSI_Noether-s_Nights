@@ -7,7 +7,7 @@ from qiskit.quantum_info import Statevector
 from qiskit_aer import AerSimulator
 
 from classical.S_DES import *
-from quantum.S_DES import QuantumS_DES
+from quantum.S_DES import QuantumSDES
 
 
 # noinspection PyMethodMayBeStatic
@@ -33,7 +33,7 @@ class S_DES_Test(unittest.TestCase):
     def test_q_sdes(self):
         key_register = QuantumRegister(10, name='key')
         data_register = QuantumRegister(8, name='data')
-        q_sdes = QuantumS_DES(key_register, data_register)
+        q_sdes = QuantumSDES(key_register, data_register)
 
         # noinspection PyTypeChecker
         simulator = AerSimulator(method="statevector")

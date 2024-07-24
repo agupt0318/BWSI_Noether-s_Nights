@@ -1,5 +1,14 @@
 from typing import Callable
 
+from qiskit import QuantumCircuit
+from qiskit.circuit import Qubit
+
+
+def write_classical_data(bits: list[bool], circuit: QuantumCircuit, target_qubits: list[Qubit]):
+    assert len(bits) == len(target_qubits)
+
+    circuit.x([target_qubits[i] for i, bit in enumerate(bits) if bit])
+
 
 class Hamiltonian:
     def __init__(self, calculation_function: Callable[[list[float]], float]):
