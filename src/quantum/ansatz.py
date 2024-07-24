@@ -1,7 +1,9 @@
+from qiskit.circuit import Parameter
 from qiskit import QuantumCircuit, QuantumRegister
 
 
-def A_ansatz_Y_Cx_model(theta_list):
+def A_ansatz_Y_Cx_model():
+    theta_list = [Parameter(f'theta_{i}') for i in range(10)]
     register = QuantumRegister(10)
     circuit = QuantumCircuit(register)
     for i in range(10):
@@ -13,7 +15,8 @@ def A_ansatz_Y_Cx_model(theta_list):
     return circuit
 
 
-def A_ansatz_Y_Cy_model(theta_list):
+def A_ansatz_Y_Cy_model():
+    theta_list = [Parameter(f'theta_{i}') for i in range(10)]
     register = QuantumRegister(10)
     circuit = QuantumCircuit(register)
     for i in range(10):
@@ -25,7 +28,8 @@ def A_ansatz_Y_Cy_model(theta_list):
     return circuit
 
 
-def A_ansatz_Y_Cz_model(theta_list):
+def A_ansatz_Y_Cz_model():
+    theta_list = [Parameter(f'theta_{i}') for i in range(10)]
     register = QuantumRegister(10)
     circuit = QuantumCircuit(register)
     for i in range(10):
@@ -37,7 +41,8 @@ def A_ansatz_Y_Cz_model(theta_list):
     return circuit
 
 
-def B_ansatz_Y_Cx_model(theta_list):
+def B_ansatz_Y_Cx_model():
+    theta_list = [Parameter(f'theta_{i}') for i in range(10)]
     register = QuantumRegister(10)
     circuit = QuantumCircuit(register)
     for i in range(10):
@@ -48,7 +53,8 @@ def B_ansatz_Y_Cx_model(theta_list):
     return circuit
 
 
-def B_ansatz_Y_Cy_model(theta_list):
+def B_ansatz_Y_Cy_model():
+    theta_list = [Parameter(f'theta_{i}') for i in range(10)]
     register = QuantumRegister(10)
     circuit = QuantumCircuit(register)
     for i in range(10):
@@ -59,7 +65,8 @@ def B_ansatz_Y_Cy_model(theta_list):
     return circuit
 
 
-def B_ansatz_Y_Cz_model(theta_list):
+def B_ansatz_Y_Cz_model():
+    theta_list = [Parameter(f'theta_{i}') for i in range(10)]
     register = QuantumRegister(10)
     circuit = QuantumCircuit(register)
     for i in range(10):
