@@ -7,7 +7,7 @@ from qiskit.circuit.library import C4XGate, C3XGate
 from qiskit.circuit.quantumcircuit import QubitSpecifier, ClbitSpecifier
 
 
-class QuantumS_DES(QuantumCircuit):
+class QuantumSDES(QuantumCircuit):
     def __init__(self, key: QuantumRegister, data: QuantumRegister, use_debug_barriers=False):
         self.use_debug_barriers = use_debug_barriers
         self.key_register = key
@@ -165,5 +165,5 @@ class QuantumS_DES(QuantumCircuit):
 
 
 if __name__ == '__main__':
-    circuit = QuantumS_DES(QuantumRegister(10), QuantumRegister(8), use_debug_barriers=True)
+    circuit = QuantumSDES(QuantumRegister(10), QuantumRegister(8), use_debug_barriers=True)
     circuit.debug_mpl()
