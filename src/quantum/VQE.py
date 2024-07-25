@@ -31,7 +31,7 @@ class VQE_crypto(QuantumCircuit):
         write_classical_data(list(known_plaintext), self, target_qubits=list(text_register))
 
         self.barrier()
-        self.compose(QuantumSDES(key=key_register, data=text_register))
+        self.compose(QuantumSDES(key=key_register, data=text_register), inplace=True)
         self.barrier()
 
         self.measure_all()

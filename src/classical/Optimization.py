@@ -101,14 +101,14 @@ class Optimizer:
         Evaluates the given point and returns an OptimizerGuess object representing the result
         """
         cost, key = self.cost_function(point)
-        return OptimizerGuess(point, cost, key)
+        return OptimizerGuess(point.copy(), cost, key)
 
 
 class GradientDescentOptimizer(Optimizer):
     def __init__(
             self,
-            cost_cutoff: float,
             cost_function: cost_function_t,
+            cost_cutoff: float,
             initial_point: ndarray,
             learning_rate: float
     ):
@@ -148,14 +148,14 @@ class GradientDescentOptimizer(Optimizer):
 
         guess = self.evaluate_point(self.current_point)
 
-        gradient = self._calculate_gradient_at_point(self.current_point, guess.cost)
+        gradient = self._calculate_gradient_at_point(guess.point, guess.cost)
 
         # Calculate the adaptive step size
-        step_size = self.learning_rate / abs(guess.cost + self.cost_cutoff) \
-                    + np.log(self.adaptive_factor) / self.adaptive_factor * np.random.uniform(0, 1)
+        step_size = self.learning_rate / abs(guess.cost - self.cost_cutoff) # + np.log(self.adaptive_factor) / self.adaptive_factor * np.random.uniform(0, 1)
 
         # If the gradient is too low, generate a new random guess
-        if sum(gradient ** 2) ** 0.5 < 0.8:
+        if sum(gradient ** 2) ** 0.5 < -0.8:
+            print('Generated new random guess')
             self.current_point = np.random.uniform(-1, 1, self.dimensionality)
             self.adaptive_factor = 0
         # Otherwise Update the guess based on the gradient
@@ -293,6 +293,7 @@ class NelderMeadOptimizer(Optimizer):
         second_worst = self.guesses[-2]
 
         if worst.cost - best.cost < 0.15:
+            print('Generated new random guess')
             self.guesses = self.generate_random_guesses()
             return best
 

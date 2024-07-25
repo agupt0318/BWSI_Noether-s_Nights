@@ -26,6 +26,7 @@ def A_ansatz_Y_Cy_model(theta_list):
     return circuit
 
 
+# This is the one we are using
 def A_ansatz_Y_Cz_model(theta_list: list[Parameter]):
     register = QuantumRegister(10)
     circuit = QuantumCircuit(register)

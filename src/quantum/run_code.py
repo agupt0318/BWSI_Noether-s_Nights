@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from numpy import ndarray
 
 from classical.CostFunction import construct_hamiltonian_for_ciphertext
-from classical.Optimization import NelderMeadOptimizer, GradientDescentOptimizer
+from classical.Optimization import GradientDescentOptimizer, NelderMeadOptimizer
 from classical.S_DES import encrypt_sdes
 from classical.util import bits_to_string, hamming_distance, generate_random_key, generate_random_message
 from quantum.VQE import VQE_crypto
@@ -35,7 +35,7 @@ def run():
     #     cost_function=lambda x: vqe_solver.run(x),
     #     cost_cutoff=-9,
     #     initial_point=np.array([1] + ([0] * 9), dtype=float),
-    #     learning_rate=1.08
+    #     learning_rate=.05
     # )
     optimizer = NelderMeadOptimizer(
         cost_function=lambda x: vqe_solver.run(x),
@@ -44,7 +44,7 @@ def run():
         random_simplex_generator=generate_random_simplex,
     )
 
-    for i in range(100):
+    for i in range(200):
         optimizer.step()
         if optimizer.finished:
             break
