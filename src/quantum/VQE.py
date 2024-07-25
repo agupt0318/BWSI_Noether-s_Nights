@@ -2,19 +2,23 @@ from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter
 from qiskit_aer import AerSimulator
 
-from classical.CostFunction import construct_hamiltonian_for_ciphertext
 from classical.S_DES import bitstring_8
-from classical.util import bitstring_10, bits_from_string
-from quantum.S_DES import QuantumSDES
+from classical.util import bitstring_10, bits_from_string, bits_to_string
 from quantum.ansatz import A_ansatz_Y_Cz_model
-from quantum.util import write_classical_data
+from quantum.quantum_sdes import QuantumSDES
+from quantum.util import write_classical_data, Hamiltonian
 
 
 class VQE_crypto(QuantumCircuit):
-    def __init__(self, known_plaintext: bitstring_8, known_ciphertext: bitstring_8):
+    def __init__(
+            self,
+            known_plaintext: bitstring_8,
+            hamiltonian: Hamiltonian,
+            shots_per_estimate: int = 20,
+    ):
         self.simulator = AerSimulator()
-
-        self.hamiltonian = construct_hamiltonian_for_ciphertext(known_ciphertext)
+        self.hamiltonian = hamiltonian
+        self.shots_per_estimate = shots_per_estimate
 
         key_register = self.key_register = QuantumRegister(10)
         text_register = self.text_register = QuantumRegister(8)
@@ -35,7 +39,7 @@ class VQE_crypto(QuantumCircuit):
     def run(self, ansatz_parameters: list[float]) -> tuple[float, bitstring_10]:
         measurements = self.simulator.run(
             self.assign_parameters(ansatz_parameters),
-            shots=20,
+            shots=self.shots_per_estimate,
             memory=True
         ).result().get_memory()
         # Calculate expected value of hamiltonian
@@ -43,8 +47,10 @@ class VQE_crypto(QuantumCircuit):
         total = 0
         keys_found: dict[str, int] = dict()
         for measurement in measurements:
-            measured_key_str = measurement[:10]
-            measured_data_bits = list(bits_from_string(measurement[10:]))
+
+            measured_key_str = bits_to_string(QuantumSDES.get_key_from_measurement(measurement))
+            measured_data_bits = QuantumSDES.get_message_from_measurement(measurement)
+
             total += self.hamiltonian.calculate(measured_data_bits)
             if measured_key_str not in keys_found:
                 keys_found[measured_key_str] = 0

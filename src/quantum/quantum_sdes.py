@@ -6,6 +6,8 @@ from qiskit.circuit import Operation, CircuitInstruction, InstructionSet, Barrie
 from qiskit.circuit.library import C4XGate, C3XGate
 from qiskit.circuit.quantumcircuit import QubitSpecifier, ClbitSpecifier
 
+from classical.util import bits_from_string
+
 
 class QuantumSDES(QuantumCircuit):
     def __init__(self, key: QuantumRegister, data: QuantumRegister, use_debug_barriers=False):
@@ -162,6 +164,14 @@ class QuantumSDES(QuantumCircuit):
 
     def debug_print(self):
         print(self.draw(output='text', plot_barriers=False, fold=145, vertical_compression="high"))
+
+    @staticmethod
+    def get_key_from_measurement(measurement: str):
+        return bits_from_string(measurement[8:][::-1])
+
+    @staticmethod
+    def get_message_from_measurement(measurement: str):
+        return bits_from_string(measurement[:8][::-1])
 
 
 if __name__ == '__main__':

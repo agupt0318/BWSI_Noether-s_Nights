@@ -1,13 +1,13 @@
-import random
 import unittest
 
 import numpy as np
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.quantum_info import Statevector
+from qiskit.result import Result
 from qiskit_aer import AerSimulator
 
 from classical.S_DES import *
-from quantum.S_DES import QuantumSDES
+from quantum.quantum_sdes import QuantumSDES
 
 
 # noinspection PyMethodMayBeStatic
@@ -57,10 +57,12 @@ class S_DES_Test(unittest.TestCase):
             full_circuit = register_prep_circuit.compose(q_sdes)
             full_circuit.measure_all()
 
-            simulation_result = simulator.run(full_circuit, shots=1, memory=True).result()
-            quantum_encrypted_message = tuple(i == '1' for i in simulation_result.get_memory()[0][:8][::-1])
+            simulation_result: Result = simulator.run(full_circuit, shots=1, memory=True).result()
+            quantum_encrypted_key = QuantumSDES.get_key_from_measurement(simulation_result.get_memory()[0])
+            quantum_encrypted_message = QuantumSDES.get_message_from_measurement(simulation_result.get_memory()[0])
 
-            self.assertEqual(actual_encrypted_message, quantum_encrypted_message)
+            self.assertEqual(actual_encrypted_message, quantum_encrypted_message, 'Encrypted messages should match')
+            self.assertEqual(key, quantum_encrypted_key, 'Keys should match')
 
 
 def normalize_arr(arr: list[complex]):
