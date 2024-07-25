@@ -1,54 +1,18 @@
-import numpy as np
+from matplotlib import pyplot as plt
 
 from classical.S_DES import bitstring_8
+from classical.regular_graph import generate_regular_graph_edges
+from classical.util import generate_random_message, hamming_distance, to_bits
 from quantum.util import Hamiltonian
 
 
 # Define the Hamiltonian components
-def compute_wij(Vi, Vj):
-    return 1 if Vi != Vj else -1
+def compute_wij(Vi: bool, Vj: bool) -> float:
+    return 1. if Vi != Vj else -1.
 
 
-def compute_ti(Vi):
-    return 0.5 if Vi == 1 else -0.5
-
-
-def make_edge_for_each_vertex_n_steps_away(edges, num_nodes, n):
-    for i in range(num_nodes):
-        u, v = i, (i + n) % num_nodes
-        if (u, v) not in edges and (v, u) not in edges:
-            edges.add((u, v))
-    return edges
-
-
-# Generate all possible edges for a given regularity
-# Code was lovingly inspired by https://math.stackexchange.com/questions/142112/how-to-construct-a-k-regular-graph
-def generate_regular_graph_edges(n, num_nodes):
-    edges = set()
-    if n == 1:
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 4)
-    elif n == 2:
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 1)
-    elif n == 3:
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 4)
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 3)
-    elif n == 4:
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 1)
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 2)
-    elif n == 5:
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 4)
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 3)
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 2)
-    elif n == 6:
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 1)
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 2)
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 3)
-    elif n == 7:
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 4)
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 3)
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 2)
-        edges = make_edge_for_each_vertex_n_steps_away(edges, num_nodes, 1)
-    return edges
+def compute_ti(Vi: bool) -> float:
+    return 0.5 if Vi else -0.5
 
 
 def construct_hamiltonian_for_ciphertext(ciphertext: bitstring_8) -> Hamiltonian:
@@ -85,28 +49,24 @@ def construct_hamiltonian_from_graph(V, edges) -> Hamiltonian:
     return Hamiltonian(calculate_hamiltonian)
 
 
-# Low priority
-# Energy level analysis for different regularities
-def energy_level_analysis(V, num_nodes=8):
-    results = []
-    for n in range(1, num_nodes):
-        edges = generate_regular_graph_edges(n, num_nodes)
-        H = construct_hamiltonian_from_graph(V, edges)
-        eigenvalues = np.linalg.eigvalsh(H)
-        ground_energy = np.min(eigenvalues)
-        highest_energy = np.max(eigenvalues)
-        first_excited_energy = sorted(eigenvalues)[1]
-        ratio = (first_excited_energy - ground_energy) / (highest_energy - ground_energy)
-        results.append((n, ground_energy, highest_energy, first_excited_energy, ratio))
-    return results
-
-
 if __name__ == '__main__':
-    # Example usage
-    V = [1, 0, 1, 1, 1, 0, 1, 0]  # Example ciphertext values
-    results = energy_level_analysis(V)
+    # noinspection PyTypeChecker
+    bits: bitstring_8 = generate_random_message()
+    hamiltonian = construct_hamiltonian_for_ciphertext(bits)
 
-    # Print results
-    for (n, ground_energy, highest_energy, first_excited_energy, ratio) in results:
-        print(f"{n}-regular: Ground energy={ground_energy}, Highest energy={highest_energy}, "
-              f"First excited energy={first_excited_energy}, Ratio={ratio:.4f}")
+    messages = [to_bits(i, 8) for i in range(2 ** 8)]
+    messages.sort()
+    messages.sort(key=lambda i: hamming_distance(bits, i))
+
+    costs = [hamiltonian.calculate(list(i)) for i in messages]
+    hamming = [hamming_distance(bits, i) for i in messages]
+
+    fig, ax1 = plt.subplots()
+    ax1.scatter(costs, hamming)
+    ax1.set_xlabel('Cost')
+    ax1.set_ylabel('Hamming')
+
+    plt.title('Cost vs Hamming Distance')
+    fig.legend(loc="upper right", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes)
+    fig.savefig('../../misc/cost-hamming.png')
+    plt.show()

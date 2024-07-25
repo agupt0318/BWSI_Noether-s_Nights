@@ -1,6 +1,18 @@
+import random
+
 bitstring_4 = tuple[bool, bool, bool, bool]
 bitstring_8 = tuple[bool, bool, bool, bool, bool, bool, bool, bool]
 bitstring_10 = tuple[bool, bool, bool, bool, bool, bool, bool, bool, bool, bool]
+
+
+def generate_random_key() -> bitstring_10:
+    # noinspection PyTypeChecker
+    return tuple(to_bits(random.randint(0, 2 ** 10 - 1), 10))
+
+
+def generate_random_message() -> bitstring_8:
+    # noinspection PyTypeChecker
+    return tuple(to_bits(random.randint(0, 2 ** 8 - 1), 8))
 
 
 def bits_to_string(bits: tuple[bool, ...]) -> str:
