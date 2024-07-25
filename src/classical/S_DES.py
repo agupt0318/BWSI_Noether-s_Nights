@@ -1,23 +1,4 @@
-bitstring_4 = tuple[bool, bool, bool, bool]
-bitstring_8 = tuple[bool, bool, bool, bool, bool, bool, bool, bool]
-bitstring_10 = tuple[bool, bool, bool, bool, bool, bool, bool, bool, bool, bool]
-
-
-def from_bits(bits: list[int]):
-    """
-    Converts a big-endian list of bits into an integer.
-    """
-    return int(''.join(map(lambda i: '1' if i else '0', bits)), 2)
-
-
-def to_bits(num: int, num_bits: int):
-    """
-    Converts a number to a list of bits in big-endian
-    """
-    bits = list(map(lambda i: i == '1', '{0:b}'.format(num)))
-    # Pad bits to the right length
-    bits = [False] * (num_bits - len(bits)) + bits
-    return bits
+from classical.util import *
 
 
 def permute(bits: tuple, *permutation: int) -> tuple:
@@ -118,9 +99,21 @@ def F(bits: bitstring_4, key: bitstring_8) -> bitstring_4:
     return P4(bits_after_S_box)
 
 
-def f_K(L: bitstring_4, R, key: bitstring_8) -> tuple[bitstring_4, bitstring_4]:
+def apply_sdes(bits: bitstring_8, K1: bitstring_8, K2: bitstring_8) -> bitstring_8:
+    L, R = split_8_to_4(IP(bits))
+
+    L, R = xor(L, F(R, K1)), R
+
+    L, R = R, L
+
+    L, R = xor(L, F(R, K2)), R
+
     # noinspection PyTypeChecker
-    return
+    joined: bitstring_8 = tuple([*L, *R])
+
+    result = IP_inverse(joined)
+
+    return result
 
 
 def encrypt_sdes(plaintext_bits: bitstring_8, key: bitstring_10) -> bitstring_8:
@@ -132,36 +125,10 @@ def encrypt_sdes(plaintext_bits: bitstring_8, key: bitstring_10) -> bitstring_8:
     """
     K1, K2 = generate_sub_keys(key)
 
-    L, R = split_8_to_4(IP(plaintext_bits))
-
-    L, R = xor(L, F(R, K1)), R
-
-    L, R = R, L
-
-    L, R = xor(L, F(R, K2)), R
-
-    # noinspection PyTypeChecker
-    joined: bitstring_8 = tuple([*L, *R])
-
-    ciphertext_bits = IP_inverse(joined)
-
-    return ciphertext_bits
+    return apply_sdes(plaintext_bits, K1, K2)
 
 
 def decrypt(ciphertext_bits: bitstring_8, key: bitstring_10) -> bitstring_8:
     K1, K2 = generate_sub_keys(key)
 
-    L, R = split_8_to_4(IP(ciphertext_bits))
-
-    L, R = xor(L, F(R, K2)), R
-
-    L, R = R, L
-
-    L, R = xor(L, F(R, K1)), R
-
-    # noinspection PyTypeChecker
-    joined: bitstring_8 = tuple([*L, *R])
-
-    plaintext_bits = IP_inverse(joined)
-
-    return plaintext_bits
+    return apply_sdes(ciphertext_bits, K2, K1)

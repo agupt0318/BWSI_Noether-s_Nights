@@ -44,7 +44,7 @@ class S_DES_Test(unittest.TestCase):
             # The key in big-endian order
             key = self.generate_random_key()
 
-            print(f'Testing message = {to_string(message)}, key = {to_string(key)}')
+            print(f'Testing message = {bits_to_string(message)}, key = {bits_to_string(key)}')
 
             actual_encrypted_message = encrypt_sdes(message, key)
 
@@ -70,10 +70,6 @@ def normalize_arr(arr: list[complex]):
     factor = sum(
         abs(i) ** 2 for i in arr) ** 0.5  # Note that the builtin absolute value works on complex numbers yay!
     return [i / factor for i in arr]
-
-
-def to_string(bits: tuple[bool, ...]) -> str:
-    return ''.join(map(lambda i: '1' if i else '0', bits))
 
 
 def create_statevector_from_amplitudes(num_qubits: int, amplitudes: dict[int, complex]):

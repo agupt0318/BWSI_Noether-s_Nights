@@ -2,7 +2,11 @@
 # Symmetric Cryptography (Wang et al., 2022)
 from typing import Callable
 
+import matplotlib.pyplot as plt
 import numpy as np
+
+from classical.util import bitstring_10, bits_to_string, hamming_distance
+
 
 def calculate_gradient_at_point(
         point: np.ndarray,
@@ -10,7 +14,7 @@ def calculate_gradient_at_point(
         cost_function: Callable[[np.ndarray], float],
         num_dimensions
 ):
-    epsilon = 0.01 # small step size for calculating the approximate gradient
+    epsilon = 0.01  # small step size for calculating the approximate gradient
 
     gradient = np.zeros(num_dimensions)
     for i in range(num_dimensions):
@@ -18,29 +22,40 @@ def calculate_gradient_at_point(
         adjusted_point = point.copy()
         adjusted_point[i] += epsilon
         # Approximate the gradient in the ith direction using the difference quotient
-        cost_at_adjusted_point = cost_function(adjusted_point)
+        cost_at_adjusted_point, _ = cost_function(adjusted_point)
         gradient[i] = (cost_at_adjusted_point - cost_at_point) / epsilon
 
     return gradient
 
 
 def gradient_descent(
+        known_key: bitstring_10,
         guess: np.ndarray,
-        cost_function: Callable[[np.ndarray], float],
+        cost_function: Callable[[np.ndarray], tuple[float, bitstring_10]],
         learning_rate: float,
         cost_cutoff: float,
         num_iterations: int = 1024
 ) -> np.ndarray:
-    f = 0
+    adaptive_factor = 0
     num_dimensions = len(guess)
 
     # noinspection PyTypeChecker
     best_guess: tuple[np.ndarray, float] = (None, float('inf'))
 
-    for _ in range(num_iterations):
-        f += num_dimensions + 1
+    guess_history = []
+    cost_history = []
+    hamming_distance_history = []
 
-        cost_at_current_guess = cost_function(guess)
+    for _ in range(num_iterations):
+
+        adaptive_factor += 1
+
+        cost_at_current_guess, key_for_current_guess = cost_function(guess)
+        print(f'Current guess: {np.round(guess, 2)}, key: {bits_to_string(key_for_current_guess)}')
+
+        guess_history.append(guess.copy())
+        cost_history.append(cost_at_current_guess)
+        hamming_distance_history.append(hamming_distance(key_for_current_guess, known_key))
 
         # If the cost is strictly less than the cutoff, stop
         if cost_at_current_guess < cost_cutoff:
@@ -52,15 +67,48 @@ def gradient_descent(
         gradient = calculate_gradient_at_point(guess, cost_at_current_guess, cost_function, num_dimensions)
 
         # Calculate the adaptive step size
-        step_size = learning_rate / abs(cost_at_current_guess) \
-                    + np.log(f) / f * np.random.uniform(0, 1)
+        step_size = learning_rate / abs(cost_at_current_guess + cost_cutoff) \
+                    + np.log(adaptive_factor) / adaptive_factor * np.random.uniform(0, 1)
 
         # Update the guess based on the gradient
         guess -= gradient * step_size
 
         # If the gradient is too low, generate a new random guess
-        if gradient < 0.8:
+        if sum(gradient ** 2) ** 0.5 < 0.8:
             guess = np.random.uniform(-1, 1, num_dimensions)
+
+    # Plot the guess history
+    # line graph for hamming distance and hamiltonian vs iteration
+    # line graph for ansatz params (10 lines) vs iteration
+    fig, ax1 = plt.subplots()
+    ax1.plot(cost_history, label='Cost', color='tab:blue')
+    ax1.set_xlabel('Iteration')
+    ax1.set_ylabel('Cost', color='tab:blue')
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+
+    ax2 = ax1.twinx()
+    ax2.plot(hamming_distance_history, label='Hamming Distance', color='tab:red')
+    ax2.set_ylabel('Hamming Distance', color='tab:red')
+    ax2.tick_params(axis='y', labelcolor='tab:red')
+
+    plt.title('Cost and Hamming Distance Over Iterations')
+    fig.legend(loc="upper right", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes)
+    fig.savefig('../../misc/cost-hamming.png')
+    plt.show()
+
+    fig, ax = plt.subplots()
+
+    for i in range(10):
+        guesses_at_i = [guess[i] for guess in guess_history]
+        ax.plot(guesses_at_i, label=f'Index {i}')
+        # guess is an array of 10 elements, should have 1 line per index
+    ax.set_xlabel('Iteration')
+    ax.set_ylabel('Guess Value')
+    ax.set_title('Guess History')
+    ax.legend()
+    fig.savefig('../../misc/ansatz.png')
+    plt.show()
+
 
     return best_guess[0]
 

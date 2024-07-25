@@ -1,4 +1,5 @@
-from qiskit import QuantumCircuit,QuantumRegister
+from qiskit import QuantumCircuit, QuantumRegister
+
 
 def plaintext_circuit(plaintext):
     register = QuantumRegister(len(plaintext))
@@ -7,4 +8,3 @@ def plaintext_circuit(plaintext):
         if int(plaintext[i]) == 1:
             circuit.x(i)
     return circuit
-    

@@ -1,6 +1,7 @@
 import numpy as np
 
-from quantum.utils import Hamiltonian
+from classical.S_DES import bitstring_8
+from quantum.util import Hamiltonian
 
 
 # Define the Hamiltonian components
@@ -50,8 +51,13 @@ def generate_regular_graph_edges(n, num_nodes):
     return edges
 
 
+def construct_hamiltonian_for_ciphertext(ciphertext: bitstring_8) -> Hamiltonian:
+    edges = generate_regular_graph_edges(3, 8)
+    return construct_hamiltonian_from_graph(ciphertext, edges)
+
+
 # Construct the Hamiltonian for a given regular graph
-def construct_hamiltonian(V, edges) -> Hamiltonian:
+def construct_hamiltonian_from_graph(V, edges) -> Hamiltonian:
     num_nodes = len(V)
 
     pair_terms: list[tuple[float, int, int]] = []
@@ -80,13 +86,12 @@ def construct_hamiltonian(V, edges) -> Hamiltonian:
 
 
 # Low priority
-
 # Energy level analysis for different regularities
 def energy_level_analysis(V, num_nodes=8):
     results = []
     for n in range(1, num_nodes):
         edges = generate_regular_graph_edges(n, num_nodes)
-        H = construct_hamiltonian(V, edges)
+        H = construct_hamiltonian_from_graph(V, edges)
         eigenvalues = np.linalg.eigvalsh(H)
         ground_energy = np.min(eigenvalues)
         highest_energy = np.max(eigenvalues)
@@ -96,11 +101,12 @@ def energy_level_analysis(V, num_nodes=8):
     return results
 
 
-# Example usage
-V = [1, 0, 1, 1, 1, 0, 1, 0]  # Example ciphertext values
-results = energy_level_analysis(V)
+if __name__ == '__main__':
+    # Example usage
+    V = [1, 0, 1, 1, 1, 0, 1, 0]  # Example ciphertext values
+    results = energy_level_analysis(V)
 
-# Print results
-for (n, ground_energy, highest_energy, first_excited_energy, ratio) in results:
-    print(f"{n}-regular: Ground energy={ground_energy}, Highest energy={highest_energy}, "
-          f"First excited energy={first_excited_energy}, Ratio={ratio:.4f}")
+    # Print results
+    for (n, ground_energy, highest_energy, first_excited_energy, ratio) in results:
+        print(f"{n}-regular: Ground energy={ground_energy}, Highest energy={highest_energy}, "
+              f"First excited energy={first_excited_energy}, Ratio={ratio:.4f}")

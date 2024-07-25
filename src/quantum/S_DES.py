@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Union
 
 from matplotlib import pyplot as plt
 from qiskit import QuantumCircuit, QuantumRegister
@@ -141,9 +141,9 @@ class QuantumSDES(QuantumCircuit):
     # noinspection SpellCheckingInspection
     def append(
             self,
-            instruction: Operation | CircuitInstruction,
-            qargs: Sequence[QubitSpecifier] | None = None,
-            cargs: Sequence[ClbitSpecifier] | None = None,
+            instruction: Union[Operation, CircuitInstruction],
+            qargs: Union[Sequence[QubitSpecifier], None] = None,
+            cargs: Union[Sequence[ClbitSpecifier], None] = None,
             *,
             copy: bool = True,
     ) -> InstructionSet:
