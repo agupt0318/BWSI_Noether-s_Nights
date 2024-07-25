@@ -37,6 +37,7 @@ def run():
     #     initial_point=np.array([1] + ([0] * 9), dtype=float),
     #     learning_rate=.05
     # )
+
     optimizer = NelderMeadOptimizer(
         cost_function=lambda x: vqe_solver.run(x),
         cost_cutoff=-9,
@@ -81,6 +82,16 @@ def run():
     ax.set_xlabel('Iteration')
     ax.set_ylabel('Guess Value')
     ax.set_title('Guess History')
+    ax.legend()
+    # fig.savefig('../../misc/ansatz.png')
+    plt.show()
+
+
+    fig, ax = plt.subplots()
+    ax.plot(optimizer.volume_history)
+    ax.set_xlabel('Iteration')
+    ax.set_ylabel('Simplex volume')
+    ax.set_title('Volume History')
     ax.legend()
     # fig.savefig('../../misc/ansatz.png')
     plt.show()

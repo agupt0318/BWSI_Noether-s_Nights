@@ -1,5 +1,6 @@
 # Algorithms taken from Appendix C of the paper A Variational Quantum Attack for AES-like
 # Symmetric Cryptography (Wang et al., 2022)
+import math
 from typing import Callable, Union
 
 import numpy as np
@@ -151,7 +152,8 @@ class GradientDescentOptimizer(Optimizer):
         gradient = self._calculate_gradient_at_point(guess.point, guess.cost)
 
         # Calculate the adaptive step size
-        step_size = self.learning_rate / abs(guess.cost - self.cost_cutoff) # + np.log(self.adaptive_factor) / self.adaptive_factor * np.random.uniform(0, 1)
+        step_size = self.learning_rate / abs(
+            guess.cost - self.cost_cutoff)  # + np.log(self.adaptive_factor) / self.adaptive_factor * np.random.uniform(0, 1)
 
         # If the gradient is too low, generate a new random guess
         if sum(gradient ** 2) ** 0.5 < -0.8:
@@ -265,6 +267,8 @@ class NelderMeadOptimizer(Optimizer):
         # The candidate points and their costs
         self.guesses: list[OptimizerGuess] = self.generate_random_guesses()
 
+        self.volume_history = []
+
     def generate_random_guesses(self) -> list[OptimizerGuess]:
         points = self.random_simplex_generator()
 
@@ -282,6 +286,12 @@ class NelderMeadOptimizer(Optimizer):
         return result / len(guesses)
 
     def _next_guess(self) -> OptimizerGuess:
+        # DEBUG: simplex volume
+        vol = math.log(abs(np.linalg.det(
+            np.array([[*g.point, 1] for g in self.guesses])
+        )))
+        self.volume_history.append(vol)
+
         # In the Nelder-Mead optimization algorithm, the idea is to replace the worst guess with a better guess at each
         # step. Ideally, this should allow the simplex formed by the current list of guesses to converge to the minimum.
 
