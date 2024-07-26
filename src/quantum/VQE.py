@@ -60,7 +60,6 @@ class VQE_crypto(QuantumCircuit):
             measured_data_bits = QuantumSDES.get_message_from_measurement(measurement)
 
             # if measured_data_bits == self.known_ciphertext:
-            #     print(f'Found solution by lucky measurement: {measured_key_str}')
             #     self.solution = bits_from_string(measured_key_str)
 
             total += self.hamiltonian.calculate(list(measured_data_bits))

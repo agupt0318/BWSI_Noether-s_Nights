@@ -1,8 +1,8 @@
 from matplotlib import pyplot as plt
 
-from classical.S_DES import bitstring_8
+from classical.S_DES import bitstring_8, encrypt_sdes
 from classical.regular_graph import generate_regular_graph_edges
-from classical.util import generate_random_message, hamming_distance, to_bits
+from classical.util import generate_random_message, hamming_distance, to_bits, bitstring_10, generate_random_key
 from quantum.util import Hamiltonian
 
 
@@ -18,13 +18,6 @@ def compute_ti(Vi: bool) -> float:
 def construct_graph_hamiltonian_for_ciphertext(ciphertext: bitstring_8) -> Hamiltonian:
     edges = generate_regular_graph_edges(3, 8)
     return construct_hamiltonian_from_graph(ciphertext, edges)
-
-
-def construct_hamming_hamiltonian_for_ciphertext(ciphertext: bitstring_8) -> Hamiltonian:
-    def calculate_hamiltonian(measurement: list[bool]) -> float:
-        return hamming_distance(ciphertext, tuple(measurement)) * 7 - 16
-
-    return Hamiltonian(calculate_hamiltonian)
 
 
 # Construct the Hamiltonian for a given regular graph
@@ -58,22 +51,39 @@ def construct_hamiltonian_from_graph(V, edges) -> Hamiltonian:
 
 if __name__ == '__main__':
     # noinspection PyTypeChecker
-    bits: bitstring_8 = generate_random_message()
-    hamiltonian = construct_graph_hamiltonian_for_ciphertext(bits)
+    message: bitstring_8 = generate_random_message()
+    true_key: bitstring_10 = generate_random_key()
+    encrypted: bitstring_8 = encrypt_sdes(message, true_key)
 
-    messages = [to_bits(i, 8) for i in range(2 ** 8)]
-    messages.sort()
-    messages.sort(key=lambda i: hamming_distance(bits, i))
+    hamiltonian = construct_graph_hamiltonian_for_ciphertext(encrypted)
 
-    costs = [hamiltonian.calculate(list(i)) for i in messages]
-    hamming = [hamming_distance(bits, i) for i in messages]
+    keys = [to_bits(i, 10) for i in range(2 ** 10)]
+    encrypted_with_keys = [encrypt_sdes(message, key) for key in keys]
 
-    fig, ax1 = plt.subplots()
-    ax1.scatter(costs, hamming)
-    ax1.set_xlabel('Cost')
-    ax1.set_ylabel('Hamming')
+    ciphertext_costs = [hamiltonian.calculate(list(e)) for e in encrypted_with_keys]
+    ciphertext_hamming = [hamming_distance(encrypted, e) for e in encrypted_with_keys]
+    key_hamming = [hamming_distance(true_key, i) for i in keys]
 
-    plt.title('Cost vs Hamming Distance')
-    fig.legend(loc="upper right", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes)
-    fig.savefig('../../misc/cost-hamming.png')
+    fig, ax = plt.subplots()
+    ax.scatter(ciphertext_costs, key_hamming)
+    ax.set_xlabel('Ciphertext Cost')
+    ax.set_ylabel('Key Hamming Distance')
+
+    plt.title('Ciphertext Cost vs Key Hamming Distance')
+    plt.show()
+
+    fig, ax = plt.subplots()
+    ax.scatter(ciphertext_hamming, key_hamming)
+    ax.set_xlabel('Ciphertext Hamming Distance')
+    ax.set_ylabel('Key Hamming Distance')
+
+    plt.title('Ciphertext Hamming Distance vs Key Hamming Distance')
+    plt.show()
+
+    fig, ax = plt.subplots()
+    ax.scatter(ciphertext_hamming, ciphertext_costs)
+    ax.set_xlabel('Ciphertext Hamming Distance')
+    ax.set_ylabel('Ciphertext Cost')
+
+    plt.title('Ciphertext Hamming Distance vs Ciphertext Cost')
     plt.show()

@@ -87,7 +87,7 @@ class Optimizer[Data]:
         new_guess = self._next_guess()
         self._history.append(new_guess)
 
-        print(f'Current point: {np.round(new_guess.point, 2)}, data: {new_guess.data}')
+        # print(f'Current point: {np.round(new_guess.point, 2)}, data: {new_guess.data}')
 
         # Update the current best guess
         if self._best_guess is None or new_guess < self._best_guess:
@@ -162,7 +162,7 @@ class GradientDescentOptimizer[Data](Optimizer[Data]):
 
             # If the gradient is too low, generate a new random guess
             if sum(gradient ** 2) ** 0.5 < 0.8:
-                print('Generated new random guess')
+                # print('Generated new random guess')
                 self.current_point = np.random.uniform(-1, 1, self.dimensionality)
                 self.adaptive_factor = 0
             # Otherwise Update the guess based on the gradient
@@ -222,7 +222,7 @@ class NelderMeadOptimizer(Optimizer):
         # DEBUG: simplex volume
         vol = math.log(abs(np.linalg.det(
             np.array([[*g.point, 1] for g in self.guesses])
-        )))
+        )) + 0.000001)
         self.volume_history.append(vol)
 
         # In the Nelder-Mead optimization algorithm, the idea is to replace the worst guess with a better guess at each
@@ -236,7 +236,7 @@ class NelderMeadOptimizer(Optimizer):
         second_worst = self.guesses[-2]
 
         if worst.cost - best.cost < 0.15:
-            print('Generated new random guess')
+            # print('Generated new random guess')
             self.guesses = self.generate_random_guesses()
             return best
 

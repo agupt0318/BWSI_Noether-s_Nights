@@ -1,11 +1,5 @@
-import math
-
-import numpy as np
-from matplotlib import pyplot as plt
-from numpy import ndarray
-
-from classical.CostFunction import construct_graph_hamiltonian_for_ciphertext
-from classical.Optimization import NelderMeadOptimizer
+from classical.CostFunction import *
+from classical.Optimization import *
 from classical.S_DES import encrypt_sdes
 from classical.util import bits_to_string, hamming_distance, generate_random_key, generate_random_message
 from quantum.VQE import VQE_crypto
@@ -21,10 +15,15 @@ def run():
 
     known_ciphertext = encrypt_sdes(known_plaintext, secret_key)
 
-    print(f'Testing with key={bits_to_string(secret_key)}')
+    print(f'Testing with key={
+        bits_to_string(secret_key)
+    }, message={
+        bits_to_string(known_plaintext)
+    }, ciphertext={
+        bits_to_string(known_ciphertext)
+    }')
 
     hamiltonian = construct_graph_hamiltonian_for_ciphertext(known_ciphertext)
-    # hamiltonian = construct_hamming_hamiltonian_for_ciphertext(known_ciphertext),
 
     vqe_solver = VQE_crypto(
         known_plaintext,
@@ -33,21 +32,21 @@ def run():
         shots_per_estimate=10
     )
 
-    # optimizer: Optimizer = GradientDescentOptimizer(
-    #     cost_function=lambda x: vqe_solver.run(x),
-    #     cost_cutoff=-9,
-    #     initial_point=np.array([1] + ([0] * 9), dtype=float),
-    #     learning_rate=0.05
-    # )
-
-    optimizer = NelderMeadOptimizer(
+    optimizer: Optimizer = GradientDescentOptimizer(
         cost_function=lambda x: vqe_solver.run(x),
         cost_cutoff=-9,
-        dimensionality=10,
-        random_simplex_generator=generate_random_simplex,
+        initial_point=np.array([1] + ([0] * 9), dtype=float),
+        learning_rate=0.05
     )
 
-    for i in range(200):
+    # optimizer = NelderMeadOptimizer(
+    #     cost_function=lambda x: vqe_solver.run(x),
+    #     cost_cutoff=-9,
+    #     dimensionality=10,
+    #     random_simplex_generator=generate_random_simplex,
+    # )
+
+    for i in range(50):
         optimizer.step()
 
         if vqe_solver.solution is not None:
@@ -111,7 +110,11 @@ def run():
         # fig.savefig('../../misc/ansatz.png')
         plt.show()
 
-    print(f'Final result: key={bits_to_string(solution)}')
+    print(f'Final result: key={
+        bits_to_string(solution)
+    }, encrypted={
+        bits_to_string(encrypt_sdes(known_plaintext, solution))
+    }')
 
 
 if __name__ == "__main__":
