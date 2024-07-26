@@ -60,6 +60,7 @@ class test_Optimization(unittest.TestCase):
             np.log(test_function(np.array([x, y])))
             for x in np.arange(-10, 10, 0.05)] for y in
                             np.arange(-10, 10, 0.05)])
+
         plt.imshow(
             (_points - min(_points.flatten())) / (max(_points.flatten()) - min(_points.flatten())),
             cmap='binary_r', extent=(-10, 10, 10, -10)

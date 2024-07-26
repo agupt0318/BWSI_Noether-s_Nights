@@ -28,7 +28,7 @@ def construct_hamiltonian_from_graph(V, edges) -> Hamiltonian:
     single_terms: list[tuple[float, int]] = []
 
     # Add terms wij Zi Zj
-    for (i, j) in edges:
+    for (i, j, _) in edges:
         wij = compute_wij(V[i], V[j])
         pair_terms.append((wij, i, j))
 

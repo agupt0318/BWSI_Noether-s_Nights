@@ -8,7 +8,7 @@ def make_edge_for_each_vertex_n_steps_away(edges, num_nodes, n):
     for i in range(num_nodes):
         u, v = i, (i + n) % num_nodes
         if (u, v) not in edges and (v, u) not in edges:
-            edges.add((u, v))
+            edges.add((u, v, 1.0))
     return edges
 
 

@@ -12,6 +12,8 @@ from quantum.ansatz import A_ansatz_Y_Cz_model
 from quantum.quantum_sdes import QuantumSDES
 from quantum.util import write_classical_data, Hamiltonian
 
+class VQECircuit(QuantumCircuit):
+    def __init__(self, base_circuit, ansatz_circuit):
 
 class VQE_crypto(QuantumCircuit):
     def __init__(
@@ -32,8 +34,8 @@ class VQE_crypto(QuantumCircuit):
 
         super().__init__(key_register, text_register)
 
-        ansatz_parameters = self.ansatz_parameters = [Parameter(f'ansatz_param_{i}') for i in range(10)]
-        self.compose(A_ansatz_Y_Cz_model(ansatz_parameters), key_register, inplace=True)
+        self.ansatz_parameters = [Parameter(f'ansatz_param_{i}') for i in range(10)]
+        self.compose(A_ansatz_Y_Cz_model(self.ansatz_parameters), key_register, inplace=True)
 
         write_classical_data(list(known_plaintext), self, target_qubits=list(text_register))
 
@@ -47,9 +49,9 @@ class VQE_crypto(QuantumCircuit):
         # noinspection PyTypeChecker
         self.simulator = AerSimulator(method="statevector")
 
-    def run(self, ansatz_parameters: ndarray) -> OptimizerGuess[bitstring_10]:
+    def run(self, ansatz_parameter_values: ndarray) -> OptimizerGuess[bitstring_10]:
         measurements = self.simulator.run(
-            self.assign_parameters(ansatz_parameters),
+            self.assign_parameters(ansatz_parameter_values),
             shots=self.shots_per_estimate,
             memory=True
         ).result().get_memory()
@@ -76,7 +78,7 @@ class VQE_crypto(QuantumCircuit):
 
         # noinspection PyTypeChecker
         return OptimizerGuess(
-            ansatz_parameters.copy(),
+            ansatz_parameter_values.copy(),
             expected_value_of_hamiltonian,
             bits_from_string(most_common_key)
         )

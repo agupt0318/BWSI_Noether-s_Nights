@@ -115,6 +115,70 @@ class Optimizer[Data]:
         return self._cost_function(point)
 
 
+class OriginalGradientDescentOptimizer[Data](Optimizer[Data]):
+    def __init__(
+            self,
+            cost_function: cost_function_t[Data],
+            cost_cutoff: float,
+            initial_point: ndarray,
+            learning_rate: float
+    ):
+        super().__init__(cost_function, cost_cutoff)
+
+        # The current point in gradient descent
+        self.current_point = initial_point
+        # A constant controlling the step size in gradient descent
+        self.learning_rate = learning_rate
+
+        # The dimensionality of the search space
+        self.dimensionality = len(initial_point)
+
+        self.adaptive_factor = 0
+
+    def _calculate_gradient_at_point(
+            self,
+            point: ndarray,
+            cost_at_point: float
+    ):
+        epsilon = 0.01  # small step size for calculating the approximate gradient
+
+        gradient = np.zeros(self.dimensionality)
+        for i in range(self.dimensionality):
+            # Calculate a point a small step away in the ith direction
+            adjusted_point = point.copy()
+            adjusted_point[i] += epsilon
+            # Approximate the gradient in the ith direction using the difference quotient
+            cost_at_adjusted_point = self.evaluate_point(adjusted_point).cost
+            gradient[i] = (cost_at_adjusted_point - cost_at_point) / epsilon
+
+        return gradient
+
+    def _next_guess(self) -> OptimizerGuess:
+        self.adaptive_factor += 1 + self.dimensionality
+
+        guess = self.evaluate_point(self.current_point)
+
+        gradient = self._calculate_gradient_at_point(guess.point, guess.cost)
+
+        try:
+            # Calculate the adaptive step size
+            step_size = (
+                    self.learning_rate / abs(guess.cost - self._cost_cutoff)
+                    + np.random.uniform(0, 1) * np.log(self.adaptive_factor) / self.adaptive_factor
+            )
+
+            # If the gradient is too low, generate a new random guess
+            if sum(gradient ** 2) ** 0.5 < 0.8:
+                # print('Generated new random guess')
+                self.current_point = np.random.uniform(-1, 1, self.dimensionality)
+                self.adaptive_factor = 0
+            # Otherwise Update the guess based on the gradient
+            else:
+                self.current_point -= gradient * step_size
+        finally:
+            return guess
+
+
 class GradientDescentOptimizer[Data](Optimizer[Data]):
     def __init__(
             self,
@@ -178,11 +242,13 @@ class AdaGradOptimizer[Data](GradientDescentOptimizer[Data]):
             cost_function: cost_function_t[Data],
             cost_cutoff: float,
             initial_point: ndarray,
-            learning_rate: float
+            learning_rate: float,
+            adagrad_factor: float,
     ):
         super().__init__(cost_function, cost_cutoff, initial_point, learning_rate)
 
         # Adaptive gradient
+        self.adagrad_factor = adagrad_factor
         self.adagrad_ss = np.zeros(self.dimensionality)
 
     def _next_guess(self) -> OptimizerGuess:
@@ -203,7 +269,7 @@ class AdaGradOptimizer[Data](GradientDescentOptimizer[Data]):
                 self.adaptive_factor = 0
             # Otherwise Update the guess based on the gradient
             else:
-                self.current_point -= gradient * step_size / (1e-4 + np.sqrt(self.adagrad_ss))
+                self.current_point -= gradient * step_size / (1 + self.adagrad_factor * np.sqrt(self.adagrad_ss))
         finally:
             return guess
 

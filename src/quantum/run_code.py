@@ -32,13 +32,21 @@ def run():
         shots_per_estimate=10,
         find_solution_by_lucky_measurement=False
     )
-
+    #
     optimizer: Optimizer = GradientDescentOptimizer(
         cost_function=lambda x: vqe_solver.run(x),
         cost_cutoff=-9,
         initial_point=np.array([1] + ([0] * 9), dtype=float),
-        learning_rate=0.05
+        learning_rate=1.08
     )
+
+    # optimizer: Optimizer = AdaGradOptimizer(
+    #     cost_function=lambda x: vqe_solver.run(x),
+    #     cost_cutoff=-9,
+    #     initial_point=np.array([1] + ([0] * 9), dtype=float),
+    #     learning_rate=0.05,
+    #     adagrad_factor=0.1
+    # )
 
     # optimizer: Optimizer = NelderMeadOptimizer(
     #     cost_function=lambda x: vqe_solver.run(x),
