@@ -151,20 +151,21 @@ class GradientDescentOptimizer(Optimizer):
 
         gradient = self._calculate_gradient_at_point(guess.point, guess.cost)
 
-        # Calculate the adaptive step size
-        step_size = self.learning_rate / abs(
-            guess.cost - self.cost_cutoff)  # + np.log(self.adaptive_factor) / self.adaptive_factor * np.random.uniform(0, 1)
+        try:
+            # Calculate the adaptive step size
+            step_size = self.learning_rate / abs(guess.cost - self.cost_cutoff) + \
+                        np.log(self.adaptive_factor) / self.adaptive_factor * np.random.uniform(0, 1)
 
-        # If the gradient is too low, generate a new random guess
-        if sum(gradient ** 2) ** 0.5 < -0.8:
-            print('Generated new random guess')
-            self.current_point = np.random.uniform(-1, 1, self.dimensionality)
-            self.adaptive_factor = 0
-        # Otherwise Update the guess based on the gradient
-        else:
-            self.current_point -= gradient * step_size
-
-        return guess
+            # If the gradient is too low, generate a new random guess
+            if sum(gradient ** 2) ** 0.5 < 0.8:
+                print('Generated new random guess')
+                self.current_point = np.random.uniform(-1, 1, self.dimensionality)
+                self.adaptive_factor = 0
+            # Otherwise Update the guess based on the gradient
+            else:
+                self.current_point -= gradient * step_size
+        finally:
+            return guess
 
 
 class N_M_Optimizer(Optimizer):

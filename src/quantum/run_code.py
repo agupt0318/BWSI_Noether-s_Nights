@@ -4,7 +4,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from numpy import ndarray
 
-from classical.CostFunction import construct_hamiltonian_for_ciphertext
+from classical.CostFunction import construct_graph_hamiltonian_for_ciphertext, \
+    construct_hamming_hamiltonian_for_ciphertext
 from classical.Optimization import GradientDescentOptimizer, NelderMeadOptimizer
 from classical.S_DES import encrypt_sdes
 from classical.util import bits_to_string, hamming_distance, generate_random_key, generate_random_message
@@ -19,40 +20,54 @@ def generate_random_simplex() -> list[ndarray]:
 
 def run():
     known_plaintext = generate_random_message()
-    key = generate_random_key()
+    secret_key = generate_random_key()
 
-    known_ciphertext = encrypt_sdes(known_plaintext, key)
+    known_ciphertext = encrypt_sdes(known_plaintext, secret_key)
 
-    print(f'Testing with key={bits_to_string(key)}')
+    print(f'Testing with key={bits_to_string(secret_key)}')
+
+    hamiltonian = construct_graph_hamiltonian_for_ciphertext(known_ciphertext)
+    # hamiltonian = construct_hamming_hamiltonian_for_ciphertext(known_ciphertext),
 
     vqe_solver = VQE_crypto(
         known_plaintext,
-        construct_hamiltonian_for_ciphertext(known_ciphertext),
+        known_ciphertext,
+        hamiltonian,
         shots_per_estimate=100
     )
 
-    # optimizer = GradientDescentOptimizer(
-    #     cost_function=lambda x: vqe_solver.run(x),
-    #     cost_cutoff=-9,
-    #     initial_point=np.array([1] + ([0] * 9), dtype=float),
-    #     learning_rate=.05
-    # )
-
-    optimizer = NelderMeadOptimizer(
+    optimizer = GradientDescentOptimizer(
         cost_function=lambda x: vqe_solver.run(x),
         cost_cutoff=-9,
-        dimensionality=10,
-        random_simplex_generator=generate_random_simplex,
+        initial_point=np.array([1] + ([0] * 9), dtype=float),
+        learning_rate=.005
     )
+
+    # optimizer = NelderMeadOptimizer(
+    #     cost_function=lambda x: vqe_solver.run(x),
+    #     cost_cutoff=-9,
+    #     dimensionality=10,
+    #     random_simplex_generator=generate_random_simplex,
+    # )
 
     for i in range(200):
         optimizer.step()
+
+        if vqe_solver.solution is not None:
+            break
+
         if optimizer.finished:
             break
 
+    if vqe_solver.solution is None:
+        solution = optimizer.best_guess.key
+    else:
+        solution = vqe_solver.solution
+
+
     cost_history = [i.cost for i in optimizer.history]
     guess_history = [i.point for i in optimizer.history]
-    hamming_distance_history = [hamming_distance(i.key, key) for i in optimizer.history]
+    hamming_distance_history = [hamming_distance(i.key, secret_key) for i in optimizer.history]
 
     # Plot the guess history
     # line graph for hamming distance and hamiltonian vs iteration
@@ -95,6 +110,8 @@ def run():
     ax.legend()
     # fig.savefig('../../misc/ansatz.png')
     plt.show()
+    
+    print(f'Final result: key={bits_to_string(solution)}')
 
 
 if __name__ == "__main__":

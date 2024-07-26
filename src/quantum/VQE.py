@@ -1,3 +1,5 @@
+from typing import Union
+
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter
 from qiskit_aer import AerSimulator
@@ -13,12 +15,14 @@ class VQE_crypto(QuantumCircuit):
     def __init__(
             self,
             known_plaintext: bitstring_8,
+            known_ciphertext: bitstring_8,
             hamiltonian: Hamiltonian,
             shots_per_estimate: int = 20,
     ):
-        self.simulator = AerSimulator()
+        self.simulator = AerSimulator(method="statevector")
         self.hamiltonian = hamiltonian
         self.shots_per_estimate = shots_per_estimate
+        self.known_ciphertext = known_ciphertext
 
         key_register = self.key_register = QuantumRegister(10)
         text_register = self.text_register = QuantumRegister(8)
@@ -36,6 +40,8 @@ class VQE_crypto(QuantumCircuit):
 
         self.measure_all()
 
+        self.solution: Union[None, bitstring_10] = None
+
     def run(self, ansatz_parameters: list[float]) -> tuple[float, bitstring_10]:
         measurements = self.simulator.run(
             self.assign_parameters(ansatz_parameters),
@@ -51,7 +57,11 @@ class VQE_crypto(QuantumCircuit):
             measured_key_str = bits_to_string(QuantumSDES.get_key_from_measurement(measurement))
             measured_data_bits = QuantumSDES.get_message_from_measurement(measurement)
 
-            total += self.hamiltonian.calculate(measured_data_bits)
+            # if measured_data_bits == self.known_ciphertext:
+            #     print(f'Found solution by lucky measurement: {measured_key_str}')
+            #     self.solution = bits_from_string(measured_key_str)
+
+            total += self.hamiltonian.calculate(list(measured_data_bits))
             if measured_key_str not in keys_found:
                 keys_found[measured_key_str] = 0
             keys_found[measured_key_str] += 1

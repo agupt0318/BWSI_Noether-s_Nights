@@ -8,6 +8,7 @@ from qiskit_aer import AerSimulator
 
 from classical.S_DES import *
 from quantum.quantum_sdes import QuantumSDES
+from quantum.util import write_classical_data
 
 
 # noinspection PyMethodMayBeStatic
@@ -63,6 +64,36 @@ class S_DES_Test(unittest.TestCase):
 
             self.assertEqual(actual_encrypted_message, quantum_encrypted_message, 'Encrypted messages should match')
             self.assertEqual(key, quantum_encrypted_key, 'Keys should match')
+
+    def test_q_sdes_entanglement(self):
+        key_register = QuantumRegister(10, name='key')
+        data_register = QuantumRegister(8, name='data')
+        q_sdes = QuantumSDES(key_register, data_register)
+
+        # noinspection PyTypeChecker
+        simulator = AerSimulator(method="statevector")
+
+        for _ in range(25):
+            message = self.generate_random_message()
+            register_prep_circuit = QuantumCircuit(q_sdes.key_register, q_sdes.data_register)
+            write_classical_data(list(message), register_prep_circuit, list(q_sdes.data_register))
+            register_prep_circuit.h(q_sdes.key_register)
+            register_prep_circuit.barrier()
+
+            full_circuit = register_prep_circuit.compose(q_sdes)
+            full_circuit.measure_all()
+
+            simulation_result: Result = simulator.run(full_circuit, shots=100, memory=True).result()
+
+            for measurement in simulation_result.get_memory():
+                quantum_encrypted_key = QuantumSDES.get_key_from_measurement(measurement)
+                quantum_encrypted_message = QuantumSDES.get_message_from_measurement(measurement)
+
+                self.assertEqual(
+                    encrypt_sdes(message, quantum_encrypted_key),
+                    quantum_encrypted_message,
+                    'Encrypted messages should match'
+                )
 
 
 def normalize_arr(arr: list[complex]):

@@ -15,10 +15,16 @@ def compute_ti(Vi: bool) -> float:
     return 0.5 if Vi else -0.5
 
 
-def construct_hamiltonian_for_ciphertext(ciphertext: bitstring_8) -> Hamiltonian:
+def construct_graph_hamiltonian_for_ciphertext(ciphertext: bitstring_8) -> Hamiltonian:
     edges = generate_regular_graph_edges(3, 8)
     return construct_hamiltonian_from_graph(ciphertext, edges)
 
+
+def construct_hamming_hamiltonian_for_ciphertext(ciphertext: bitstring_8) -> Hamiltonian:
+    def calculate_hamiltonian(measurement: list[bool]) -> float:
+        return hamming_distance(ciphertext, tuple(measurement)) * 7 - 16
+
+    return Hamiltonian(calculate_hamiltonian)
 
 # Construct the Hamiltonian for a given regular graph
 def construct_hamiltonian_from_graph(V, edges) -> Hamiltonian:
@@ -52,7 +58,7 @@ def construct_hamiltonian_from_graph(V, edges) -> Hamiltonian:
 if __name__ == '__main__':
     # noinspection PyTypeChecker
     bits: bitstring_8 = generate_random_message()
-    hamiltonian = construct_hamiltonian_for_ciphertext(bits)
+    hamiltonian = construct_graph_hamiltonian_for_ciphertext(bits)
 
     messages = [to_bits(i, 8) for i in range(2 ** 8)]
     messages.sort()
