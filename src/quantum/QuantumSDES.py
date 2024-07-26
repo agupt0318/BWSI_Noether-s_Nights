@@ -7,6 +7,7 @@ from qiskit.circuit.library import C4XGate, C3XGate
 from qiskit.circuit.quantumcircuit import QubitSpecifier, ClbitSpecifier
 
 from classical.util import bits_from_string, bitstring_10, bitstring_8
+from quantum.VQE import VQE_circuit
 
 
 class QuantumSDES(QuantumCircuit):
@@ -174,6 +175,10 @@ class QuantumSDES(QuantumCircuit):
     def get_message_from_measurement(measurement: str) -> bitstring_8:
         # noinspection PyTypeChecker
         return tuple(bits_from_string(measurement[:8][::-1]))
+
+
+class QuantumSDES_VQE_Circuit(VQE_circuit):
+    pass
 
 
 if __name__ == '__main__':

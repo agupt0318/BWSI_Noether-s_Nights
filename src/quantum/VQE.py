@@ -1,3 +1,4 @@
+import abc
 from abc import ABCMeta
 from typing import Union
 
@@ -10,7 +11,7 @@ from classical.Optimization import OptimizerGuess
 from classical.S_DES import bitstring_8
 from classical.util import bitstring_10, bits_from_string, bits_to_string
 from quantum.ansatz import A_ansatz_Y_Cz_model
-from quantum.quantum_sdes import QuantumSDES
+from quantum.QuantumSDES import QuantumSDES
 from quantum.util import write_classical_data, Hamiltonian
 
 
