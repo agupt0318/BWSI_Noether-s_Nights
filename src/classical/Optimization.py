@@ -8,7 +8,7 @@ import numpy as np
 from numpy import ndarray
 
 
-class OptimizerGuess[Data]:
+class OptimizerGuess[Data]:  #NEED TO FIND DATA CLASS OR DELETE THIS PART OF OPTIMIZER CLASS SINCE REFERENCED BUT UNDEFINED
     """
     A class representing an optimizer guess. It contains the guessed point, the cost function at the point, and some
     data for the guess, and can be partially ordered
@@ -366,11 +366,11 @@ class NelderMeadOptimizer(Optimizer):
             # Contract. This moves the centroid towards the contraction base
             contracted = self.evaluate_point(centroid_point + self.rho * (contraction_base.point - centroid_point))
 
-            # If the contracted point
+            # If the contracted point is less than the contracted base point, add it to the end of guesses
             if contracted < contraction_base:
                 self.guesses[-1] = contracted
             else:
-                # Shrink
+                # Shrink points in guesses
                 for index, point in enumerate([g.point for g in self.guesses[1:]]):
                     shrunk_point = best.point + self.sigma * (point - best.point)
                     self.guesses[index] = self.evaluate_point(shrunk_point)
