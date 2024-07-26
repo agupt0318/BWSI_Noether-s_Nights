@@ -20,6 +20,13 @@ def himmelblau(x: ndarray) -> float:
     return (x[0] ** 2 + x[1] - 11) ** 2 + (x[0] + x[1] ** 2 - 7) ** 2
 
 
+def easom_function(x: ndarray) -> float:
+    return -np.cos(x[0]) * np.cos(x[1]) * np.exp(-((x[0] - np.pi) ** 2 + (x[1] - np.pi) ** 2)) + 1
+
+
+def color(iterations_percent):
+    return matplotlib.colormaps['jet_r'](iterations_percent)
+
 
 class test_Optimization(unittest.TestCase):
     @staticmethod

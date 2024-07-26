@@ -49,9 +49,9 @@ if __name__ == "__main__":
 
     optimized_point = gradient_descent(
         x0=initial_point,
-        function=easom_function,
-        r=1.82,
-        xerr=-9
+        function=rosenbrock,
+        r=0.5,
+        xerr=-0.1
     )
 
     print(f'Optimized point: {optimized_point}')

@@ -82,7 +82,7 @@ def run():
 
     plt.title('Cost and Hamming Distance Over Iterations')
     fig.legend(loc="upper right", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes)
-    # fig.savefig('../../misc/cost-hamming.png')
+
     plt.show()
 
     fig, ax = plt.subplots()
@@ -95,19 +95,19 @@ def run():
     ax.set_ylabel('Guess Value')
     ax.set_title('Guess History')
     ax.legend()
-    # fig.savefig('../../misc/ansatz.png')
+
     plt.show()
 
     if type(optimizer) is NelderMeadOptimizer:
         optimizer: NelderMeadOptimizer = optimizer
-        
+
         fig, ax = plt.subplots()
         ax.plot(optimizer.volume_history)
         ax.set_xlabel('Iteration')
         ax.set_ylabel('Simplex volume')
         ax.set_title('Volume History')
         ax.legend()
-        # fig.savefig('../../misc/ansatz.png')
+
         plt.show()
 
     print(f'Final result: key={
