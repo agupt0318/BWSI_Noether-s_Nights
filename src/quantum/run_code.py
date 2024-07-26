@@ -4,8 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from numpy import ndarray
 
-from classical.CostFunction import construct_graph_hamiltonian_for_ciphertext, \
-    construct_hamming_hamiltonian_for_ciphertext
+from classical.CostFunction import construct_graph_hamiltonian_for_ciphertext
 from classical.Optimization import GradientDescentOptimizer, NelderMeadOptimizer
 from classical.S_DES import encrypt_sdes
 from classical.util import bits_to_string, hamming_distance, generate_random_key, generate_random_message
@@ -56,18 +55,17 @@ def run():
         if vqe_solver.solution is not None:
             break
 
-        if optimizer.finished:
+        if optimizer._finished:
             break
 
     if vqe_solver.solution is None:
-        solution = optimizer.best_guess.key
+        solution = optimizer._best_guess.data
     else:
         solution = vqe_solver.solution
 
-
-    cost_history = [i.cost for i in optimizer.history]
-    guess_history = [i.point for i in optimizer.history]
-    hamming_distance_history = [hamming_distance(i.key, secret_key) for i in optimizer.history]
+    cost_history = [i.cost for i in optimizer._history]
+    guess_history = [i.point for i in optimizer._history]
+    hamming_distance_history = [hamming_distance(i.data, secret_key) for i in optimizer._history]
 
     # Plot the guess history
     # line graph for hamming distance and hamiltonian vs iteration
@@ -101,16 +99,18 @@ def run():
     # fig.savefig('../../misc/ansatz.png')
     plt.show()
 
+    if type(optimizer) is NelderMeadOptimizer:
+        optimizer: NelderMeadOptimizer = optimizer
+        
+        fig, ax = plt.subplots()
+        ax.plot(optimizer.volume_history)
+        ax.set_xlabel('Iteration')
+        ax.set_ylabel('Simplex volume')
+        ax.set_title('Volume History')
+        ax.legend()
+        # fig.savefig('../../misc/ansatz.png')
+        plt.show()
 
-    fig, ax = plt.subplots()
-    ax.plot(optimizer.volume_history)
-    ax.set_xlabel('Iteration')
-    ax.set_ylabel('Simplex volume')
-    ax.set_title('Volume History')
-    ax.legend()
-    # fig.savefig('../../misc/ansatz.png')
-    plt.show()
-    
     print(f'Final result: key={bits_to_string(solution)}')
 
 

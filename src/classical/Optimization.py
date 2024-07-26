@@ -1,26 +1,25 @@
 # Algorithms taken from Appendix C of the paper A Variational Quantum Attack for AES-like
 # Symmetric Cryptography (Wang et al., 2022)
+import abc
 import math
 from typing import Callable, Union
 
 import numpy as np
 from numpy import ndarray
 
-from classical.util import bitstring_10, bits_to_string
-
-cost_function_t = Callable[[ndarray], tuple[float, bitstring_10]]
+from classical.util import bits_to_string
 
 
-class OptimizerGuess:
+class OptimizerGuess[Data]:
     """
-    A class representing an optimizer guess. It contains the guessed point, the cost function at the point, and the
-    key for the guess, and can be partially ordered
+    A class representing an optimizer guess. It contains the guessed point, the cost function at the point, and some
+    data for the guess, and can be partially ordered
     """
 
-    def __init__(self, point: ndarray, cost: float, key: bitstring_10):
+    def __init__(self, point: ndarray, cost: float, data: Data):
         self.point = point.copy()
         self.cost = cost
-        self.key = key
+        self.data = data
 
     # Functions to allow comparison of guesses
     def __lt__(self, other):
@@ -43,25 +42,38 @@ class OptimizerGuess:
         return not (self == other)
 
 
-class Optimizer:
-    def __init__(self, cost_function: cost_function_t, cost_cutoff: float):
+type cost_function_t[Data] = Callable[[ndarray], OptimizerGuess[Data]]
+
+
+class Optimizer[Data]:
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, cost_function: cost_function_t[Data], cost_cutoff: float):
         """
-        :param cost_function: The cost function to minimize. It should take in a point and return a float to minimize
-                              and the key corresponding to the current guess
-        :param cost_cutoff:   The cutoff for the cost function below which we accept a guess and stop
+        :param cost_function: The cost function to minimize. It should take in a point and return an OptimizerGuess
+        :param cost_cutoff:   The cutoff for the cost below which we accept a guess and stop
         """
 
         # The cost function that we are to minimize
-        self.cost_function = cost_function
+        self._cost_function = cost_function
         # The cutoff for the cost function below which we accept a guess and stop
-        self.cost_cutoff = cost_cutoff
+        self._cost_cutoff = cost_cutoff
 
         # The current best point
-        self.best_guess: Union[OptimizerGuess, None] = None
+        self._best_guess: Union[OptimizerGuess, None] = None
         # The history of guesses, used for debug purposes
-        self.history: list[OptimizerGuess] = []
+        self._history: list[OptimizerGuess] = []
         # Whether the optimization algorithm has terminated
-        self.finished = False
+        self._finished = False
+
+    def get_best_guess(self):
+        return self._best_guess
+
+    def get_history(self):
+        return self._history
+
+    def is_finished(self):
+        return self._finished
 
     def step(self) -> bool:
         """
@@ -70,25 +82,26 @@ class Optimizer:
         """
 
         # If we are already finished, we don't need to do anything
-        if self.finished:
+        if self._finished:
             return True
 
         # Get the next guess
         new_guess = self._next_guess()
-        self.history.append(new_guess)
+        self._history.append(new_guess)
 
-        print(f'Current point: {np.round(new_guess.point, 2)}, key: {bits_to_string(new_guess.key)}')
+        print(f'Current point: {np.round(new_guess.point, 2)}, data: {bits_to_string(new_guess.data)}')
 
         # Update the current best guess
-        if self.best_guess is None or new_guess < self.best_guess:
-            self.best_guess = new_guess
+        if self._best_guess is None or new_guess < self._best_guess:
+            self._best_guess = new_guess
 
         # Check if the new guess satisfies the cost cutoff
-        if new_guess.cost < self.cost_cutoff:
-            self.finished = True
+        if new_guess.cost < self._cost_cutoff:
+            self._finished = True
 
-        return self.finished
+        return self._finished
 
+    @abc.abstractmethod
     def _next_guess(self) -> OptimizerGuess:
         """
         This method should be overridden by subclasses and represents one step of iteration in the optimization
@@ -97,18 +110,17 @@ class Optimizer:
         """
         raise NotImplementedError("Subclasses must implement this method")
 
-    def evaluate_point(self, point: ndarray) -> OptimizerGuess:
+    def evaluate_point(self, point: ndarray) -> OptimizerGuess[Data]:
         """
         Evaluates the given point and returns an OptimizerGuess object representing the result
         """
-        cost, key = self.cost_function(point)
-        return OptimizerGuess(point.copy(), cost, key)
+        return self._cost_function(point)
 
 
-class GradientDescentOptimizer(Optimizer):
+class GradientDescentOptimizer[Data](Optimizer[Data]):
     def __init__(
             self,
-            cost_function: cost_function_t,
+            cost_function: cost_function_t[Data],
             cost_cutoff: float,
             initial_point: ndarray,
             learning_rate: float
@@ -153,7 +165,7 @@ class GradientDescentOptimizer(Optimizer):
 
         try:
             # Calculate the adaptive step size
-            step_size = self.learning_rate / abs(guess.cost - self.cost_cutoff) + \
+            step_size = self.learning_rate / abs(guess.cost - self._cost_cutoff) + \
                         np.log(self.adaptive_factor) / self.adaptive_factor * np.random.uniform(0, 1)
 
             # If the gradient is too low, generate a new random guess
@@ -166,78 +178,6 @@ class GradientDescentOptimizer(Optimizer):
                 self.current_point -= gradient * step_size
         finally:
             return guess
-
-
-class N_M_Optimizer(Optimizer):
-    def __init__(self, cost_function, guess, alpha, cost_cutoff):
-        super().__init__(cost_function, cost_cutoff)
-
-        self.guess = guess
-        self.alpha = alpha
-
-        self.N = len(guess)  # N dimensions of guess
-        self.points = [guess]  # list of x1--xN values
-
-        self.calc_xi_component(0)
-
-        self.times = self.N + 1
-
-    def calc_xi_component(self, step: int):  # step should be 0 or 1
-        xi = self.guess.copy()
-        for i in range(self.N):
-            if self.guess[i] == 0:
-                xi[i] = 0.8
-            else:
-                xi[i] = self.guess[i] * self.alpha
-            self.points[i + step] = xi
-
-    def _next_guess(self) -> OptimizerGuess:
-        self.points.sort(key=lambda x: self.cost_function(x)[0])
-
-        if self.cost_function(self.points[-1])[0] - self.cost_function(self.points[1])[0] < 0.15:
-            self.calc_xi_component(1)
-            return self.points[0]
-
-        # calculate average of first N points m
-        m = np.mean(self.points[:-1], axis=0)
-        # calculate reflect point r
-        r = 2 * m - self.points[-1]
-        self.times += 1
-
-        if self.cost_function(self.points[0])[0] <= self.cost_function(r)[0] < self.cost_function(self.points[-2])[0]:
-            self.points[-1] = r
-
-        elif self.cost_function(r)[0] < self.cost_function(self.points[0])[0]:
-            # calculate expand point s
-            s = m + 2 * (m - self.points[-1])
-            self.times += 1
-            if self.cost_function(s)[0] < self.cost_function(r)[0]:
-                self.points[-1] = s
-            else:
-                self.points[-1] = r
-
-        elif self.cost_function(self.points[-2])[0] <= self.cost_function(r)[0] < self.cost_function(self.points[-1])[
-            0]:
-            c1 = m + (r - m) / 2
-            self.times += 1
-            if self.cost_function(c1)[0] < self.cost_function(r)[0]:
-                self.points[-1] = c1
-            else:
-                for i in range(1, self.N + 1):
-                    self.points[i] = self.guess + (self.points[i] - self.guess) / 2.0
-                self.times += self.N
-
-        elif self.cost_function(self.points[-1])[0] <= self.cost_function(r)[0]:
-            c2 = m + (self.points[-1] - m) / 2.0
-            self.times += 1
-            if self.cost_function(c2)[0] < self.cost_function(self.points[-1])[0]:
-                self.points[-1] = c2
-            else:
-                for i in range(1, self.N + 1):
-                    self.points[i] = self.guess + (self.points[i] - self.guess) / 2.0
-                self.times += self.N
-
-        return self.points[0]
 
 
 # Nelder-Mead optimization algorithm, as described by Wikipedia

@@ -1,9 +1,11 @@
 from typing import Union
 
+from numpy import ndarray
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter
 from qiskit_aer import AerSimulator
 
+from classical.Optimization import OptimizerGuess
 from classical.S_DES import bitstring_8
 from classical.util import bitstring_10, bits_from_string, bits_to_string
 from quantum.ansatz import A_ansatz_Y_Cz_model
@@ -42,7 +44,7 @@ class VQE_crypto(QuantumCircuit):
 
         self.solution: Union[None, bitstring_10] = None
 
-    def run(self, ansatz_parameters: list[float]) -> tuple[float, bitstring_10]:
+    def run(self, ansatz_parameters: ndarray) -> OptimizerGuess[bitstring_10]:
         measurements = self.simulator.run(
             self.assign_parameters(ansatz_parameters),
             shots=self.shots_per_estimate,
@@ -71,4 +73,8 @@ class VQE_crypto(QuantumCircuit):
         most_common_key = max(keys_found.keys(), key=lambda k: keys_found[k])
 
         # noinspection PyTypeChecker
-        return expected_value_of_hamiltonian, bits_from_string(most_common_key)
+        return OptimizerGuess(
+            ansatz_parameters.copy(),
+            expected_value_of_hamiltonian,
+            bits_from_string(most_common_key)
+        )
