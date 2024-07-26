@@ -7,7 +7,7 @@ from qiskit.result import Result
 from qiskit_aer import AerSimulator
 
 from classical.S_DES import *
-from quantum.quantum_sdes import QuantumSDES
+from quantum.QuantumSDES import QuantumSDES
 from quantum.util import write_classical_data
 
 
