@@ -104,11 +104,11 @@ if __name__ == '__main__':
     known_ciphertext = encrypt_sdes(known_plaintext, secret_key)
     print(
         f'Testing with key={
-        bits_to_string(secret_key)
+            bits_to_string(secret_key)
         }, message={
-        bits_to_string(known_plaintext)
+            bits_to_string(known_plaintext)
         }, ciphertext={
-        bits_to_string(known_ciphertext)
+            bits_to_string(known_ciphertext)
         }'
     )
     H = get_hamil_pauli_op(known_ciphertext)

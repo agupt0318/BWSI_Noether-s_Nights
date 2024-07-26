@@ -1,3 +1,4 @@
+from abc import ABCMeta
 from typing import Union
 
 from numpy import ndarray
@@ -12,8 +13,14 @@ from quantum.ansatz import A_ansatz_Y_Cz_model
 from quantum.quantum_sdes import QuantumSDES
 from quantum.util import write_classical_data, Hamiltonian
 
-class VQECircuit(QuantumCircuit):
-    def __init__(self, base_circuit, ansatz_circuit):
+
+class VQE_circuit(QuantumCircuit):
+    __metaclass__ = ABCMeta
+
+    @abc.abstractmethod
+    def get_parameters(self):
+        raise NotImplementedError("Subclasses must implement this method")
+
 
 class VQE_crypto(QuantumCircuit):
     def __init__(

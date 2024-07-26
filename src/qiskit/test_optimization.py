@@ -1,7 +1,8 @@
 import numpy as np
 from numpy import ndarray
 import unittest
-
+from Optimization import GradientDescent
+from typing import (Any, Callable, Dict, Optional, Union, Iterator)
 
 type cost_function_t[Data] = Callable[[ndarray], OptimizerGuess[Data]]
 type testFunction = Callable[[ndarray], float]
