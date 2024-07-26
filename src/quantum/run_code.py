@@ -1,20 +1,18 @@
-import random
+import math
 
 import numpy as np
 from matplotlib import pyplot as plt
 from numpy import ndarray
 
 from classical.CostFunction import construct_graph_hamiltonian_for_ciphertext
-from classical.Optimization import GradientDescentOptimizer, NelderMeadOptimizer
+from classical.Optimization import NelderMeadOptimizer
 from classical.S_DES import encrypt_sdes
 from classical.util import bits_to_string, hamming_distance, generate_random_key, generate_random_message
 from quantum.VQE import VQE_crypto
 
 
 def generate_random_simplex() -> list[ndarray]:
-    return [
-        np.array([random.random() for _ in range(10)], dtype=float) for _ in range(11)
-    ]
+    return [np.random.uniform(0, math.tau, 10) for _ in range(11)]
 
 
 def run():
@@ -32,40 +30,42 @@ def run():
         known_plaintext,
         known_ciphertext,
         hamiltonian,
-        shots_per_estimate=100
+        shots_per_estimate=10
     )
 
-    optimizer = GradientDescentOptimizer(
-        cost_function=lambda x: vqe_solver.run(x),
-        cost_cutoff=-9,
-        initial_point=np.array([1] + ([0] * 9), dtype=float),
-        learning_rate=.005
-    )
-
-    # optimizer = NelderMeadOptimizer(
+    # optimizer: Optimizer = GradientDescentOptimizer(
     #     cost_function=lambda x: vqe_solver.run(x),
     #     cost_cutoff=-9,
-    #     dimensionality=10,
-    #     random_simplex_generator=generate_random_simplex,
+    #     initial_point=np.array([1] + ([0] * 9), dtype=float),
+    #     learning_rate=0.05
     # )
+
+    optimizer = NelderMeadOptimizer(
+        cost_function=lambda x: vqe_solver.run(x),
+        cost_cutoff=-9,
+        dimensionality=10,
+        random_simplex_generator=generate_random_simplex,
+    )
 
     for i in range(200):
         optimizer.step()
 
         if vqe_solver.solution is not None:
+            print('Found solution by lucky measurement')
             break
 
-        if optimizer._finished:
+        if optimizer.is_finished():
+            print('Found solution by optimizer cutoff')
             break
 
     if vqe_solver.solution is None:
-        solution = optimizer._best_guess.data
+        solution = optimizer.get_best_guess().data
     else:
         solution = vqe_solver.solution
 
-    cost_history = [i.cost for i in optimizer._history]
-    guess_history = [i.point for i in optimizer._history]
-    hamming_distance_history = [hamming_distance(i.data, secret_key) for i in optimizer._history]
+    cost_history = [i.cost for i in optimizer.get_history()]
+    guess_history = [i.point for i in optimizer.get_history()]
+    hamming_distance_history = [hamming_distance(i.data, secret_key) for i in optimizer.get_history()]
 
     # Plot the guess history
     # line graph for hamming distance and hamiltonian vs iteration

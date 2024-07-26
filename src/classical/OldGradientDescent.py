@@ -39,6 +39,9 @@ def gradient_descent(x0, function, r, xerr):
 def easom_function(x):
     return -np.cos(x[0]) * -np.cos(x[1]) * np.exp(-((x[0] - np.pi) ** 2 + (x[1] - np.pi) ** 2))
 
+def rosenbrock(x) -> float:
+    return 100 * (x[1] - x[0] ** 2) ** 2 + (1 - x[0]) ** 2
+
 
 if __name__ == "__main__":
     # Initial point for gradient descent

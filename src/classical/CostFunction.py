@@ -26,6 +26,7 @@ def construct_hamming_hamiltonian_for_ciphertext(ciphertext: bitstring_8) -> Ham
 
     return Hamiltonian(calculate_hamiltonian)
 
+
 # Construct the Hamiltonian for a given regular graph
 def construct_hamiltonian_from_graph(V, edges) -> Hamiltonian:
     num_nodes = len(V)

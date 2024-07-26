@@ -7,8 +7,6 @@ from typing import Callable, Union
 import numpy as np
 from numpy import ndarray
 
-from classical.util import bits_to_string
-
 
 class OptimizerGuess[Data]:
     """
@@ -89,7 +87,7 @@ class Optimizer[Data]:
         new_guess = self._next_guess()
         self._history.append(new_guess)
 
-        print(f'Current point: {np.round(new_guess.point, 2)}, data: {bits_to_string(new_guess.data)}')
+        print(f'Current point: {np.round(new_guess.point, 2)}, data: {new_guess.data}')
 
         # Update the current best guess
         if self._best_guess is None or new_guess < self._best_guess:
@@ -134,8 +132,6 @@ class GradientDescentOptimizer[Data](Optimizer[Data]):
 
         # The dimensionality of the search space
         self.dimensionality = len(initial_point)
-        # A cumulative variable used to implement adaptive step size
-        self.adaptive_factor = 0
 
     def _calculate_gradient_at_point(
             self,
@@ -156,17 +152,13 @@ class GradientDescentOptimizer[Data](Optimizer[Data]):
         return gradient
 
     def _next_guess(self) -> OptimizerGuess:
-
-        self.adaptive_factor += self.dimensionality + 1
-
         guess = self.evaluate_point(self.current_point)
 
         gradient = self._calculate_gradient_at_point(guess.point, guess.cost)
 
         try:
             # Calculate the adaptive step size
-            step_size = self.learning_rate / abs(guess.cost - self._cost_cutoff) + \
-                        np.log(self.adaptive_factor) / self.adaptive_factor * np.random.uniform(0, 1)
+            step_size = self.learning_rate / abs(guess.cost - self._cost_cutoff)
 
             # If the gradient is too low, generate a new random guess
             if sum(gradient ** 2) ** 0.5 < 0.8:
