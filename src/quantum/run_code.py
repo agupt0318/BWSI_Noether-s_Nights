@@ -16,11 +16,11 @@ def run():
     known_ciphertext = encrypt_sdes(known_plaintext, secret_key)
 
     print(f'Testing with key={
-        bits_to_string(secret_key)
+    bits_to_string(secret_key)
     }, message={
-        bits_to_string(known_plaintext)
+    bits_to_string(known_plaintext)
     }, ciphertext={
-        bits_to_string(known_ciphertext)
+    bits_to_string(known_ciphertext)
     }')
 
     hamiltonian = construct_graph_hamiltonian_for_ciphertext(known_ciphertext)
@@ -29,7 +29,8 @@ def run():
         known_plaintext,
         known_ciphertext,
         hamiltonian,
-        shots_per_estimate=10
+        shots_per_estimate=10,
+        find_solution_by_lucky_measurement=False
     )
 
     optimizer: Optimizer = GradientDescentOptimizer(
@@ -39,7 +40,7 @@ def run():
         learning_rate=0.05
     )
 
-    # optimizer = NelderMeadOptimizer(
+    # optimizer: Optimizer = NelderMeadOptimizer(
     #     cost_function=lambda x: vqe_solver.run(x),
     #     cost_cutoff=-9,
     #     dimensionality=10,
@@ -111,9 +112,9 @@ def run():
         plt.show()
 
     print(f'Final result: key={
-        bits_to_string(solution)
+    bits_to_string(solution)
     }, encrypted={
-        bits_to_string(encrypt_sdes(known_plaintext, solution))
+    bits_to_string(encrypt_sdes(known_plaintext, solution))
     }')
 
 

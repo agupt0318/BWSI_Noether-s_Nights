@@ -20,11 +20,12 @@ class VQE_crypto(QuantumCircuit):
             known_ciphertext: bitstring_8,
             hamiltonian: Hamiltonian,
             shots_per_estimate: int = 20,
+            find_solution_by_lucky_measurement: bool = True,
     ):
-        self.simulator = AerSimulator(method="statevector")
         self.hamiltonian = hamiltonian
         self.shots_per_estimate = shots_per_estimate
         self.known_ciphertext = known_ciphertext
+        self.find_solution_by_lucky_measurement = find_solution_by_lucky_measurement
 
         key_register = self.key_register = QuantumRegister(10)
         text_register = self.text_register = QuantumRegister(8)
@@ -43,6 +44,8 @@ class VQE_crypto(QuantumCircuit):
         self.measure_all()
 
         self.solution: Union[None, bitstring_10] = None
+        # noinspection PyTypeChecker
+        self.simulator = AerSimulator(method="statevector")
 
     def run(self, ansatz_parameters: ndarray) -> OptimizerGuess[bitstring_10]:
         measurements = self.simulator.run(
@@ -50,8 +53,8 @@ class VQE_crypto(QuantumCircuit):
             shots=self.shots_per_estimate,
             memory=True
         ).result().get_memory()
-        # Calculate expected value of hamiltonian
 
+        # Calculate expected value of hamiltonian
         total = 0
         keys_found: dict[str, int] = dict()
         for measurement in measurements:
@@ -59,8 +62,8 @@ class VQE_crypto(QuantumCircuit):
             measured_key_str = bits_to_string(QuantumSDES.get_key_from_measurement(measurement))
             measured_data_bits = QuantumSDES.get_message_from_measurement(measurement)
 
-            # if measured_data_bits == self.known_ciphertext:
-            #     self.solution = bits_from_string(measured_key_str)
+            if self.find_solution_by_lucky_measurement and measured_data_bits == self.known_ciphertext:
+                self.solution = bits_from_string(measured_key_str)
 
             total += self.hamiltonian.calculate(list(measured_data_bits))
             if measured_key_str not in keys_found:
