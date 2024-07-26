@@ -285,7 +285,7 @@ class NelderMeadOptimizer(Optimizer):
             alpha: float = 1,
             gamma: float = 2,  # This is the value used in the paper
             rho: float = 0.5,  # I think this is the value used in the paper
-            sigma: float = .5  # TODO: look up the value used
+            sigma: float = .5  # TODO: look up the value used in the paper
     ):
         super().__init__(cost_function, cost_cutoff)
 
