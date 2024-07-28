@@ -3,7 +3,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import Aer
 from qiskit_ibm_runtime import *
-
+import logging
 from classical.CostFunction import *
 from classical.Optimization import *
 from classical.S_DES import *
