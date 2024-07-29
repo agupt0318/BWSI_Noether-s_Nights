@@ -3,7 +3,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import Aer
 from qiskit_ibm_runtime import *
-import logging
+
 from classical.CostFunction import *
 from classical.Optimization import *
 from classical.S_DES import *
@@ -70,9 +70,14 @@ def get_isa_circuit(circuit: QuantumCircuit):
 
 def get_hamil_pauli_op(known_ciphertext):
     graph = rx.PyGraph()
-    graph.add_nodes_from(np.arange(0, 10, 1))
+    graph.add_nodes_from(np.arange(0, 18, 1))
+
     edge_list = generate_regular_graph_edges(3, 8)
     pair_terms, single_terms = construct_hamiltonian_from_graph(known_ciphertext, edge_list)
+
+    pair_terms = [(a + 10, b + 10, c) for a, b, c in pair_terms]
+    single_terms = [(a + 10, b) for a, b in single_terms]
+
     graph.add_edges_from(pair_terms)
 
     max_cut_paulis = build_max_cut_paulis(graph, single_terms)
@@ -104,11 +109,11 @@ if __name__ == '__main__':
     known_ciphertext = encrypt_sdes(known_plaintext, secret_key)
     print(
         f'Testing with key={
-            bits_to_string(secret_key)
+        bits_to_string(secret_key)
         }, message={
-            bits_to_string(known_plaintext)
+        bits_to_string(known_plaintext)
         }, ciphertext={
-            bits_to_string(known_ciphertext)
+        bits_to_string(known_ciphertext)
         }'
     )
     H = get_hamil_pauli_op(known_ciphertext)

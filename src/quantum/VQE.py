@@ -1,5 +1,3 @@
-import abc
-from abc import ABCMeta
 from typing import Union
 
 from numpy import ndarray
@@ -10,17 +8,9 @@ from qiskit_aer import AerSimulator
 from classical.Optimization import OptimizerGuess
 from classical.S_DES import bitstring_8
 from classical.util import bitstring_10, bits_from_string, bits_to_string
-from quantum.ansatz import A_ansatz_Y_Cz_model
 from quantum.QuantumSDES import QuantumSDES
+from quantum.ansatz import A_ansatz_Y_Cz_model
 from quantum.util import write_classical_data, Hamiltonian
-
-
-class VQE_circuit(QuantumCircuit):
-    __metaclass__ = ABCMeta
-
-    @abc.abstractmethod
-    def get_parameters(self):
-        raise NotImplementedError("Subclasses must implement this method")
 
 
 class VQE_crypto(QuantumCircuit):

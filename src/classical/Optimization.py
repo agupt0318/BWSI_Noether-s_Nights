@@ -8,7 +8,9 @@ import numpy as np
 from numpy import ndarray
 
 
-class OptimizerGuess[Data]:  #NEED TO FIND DATA CLASS OR DELETE THIS PART OF OPTIMIZER CLASS SINCE REFERENCED BUT UNDEFINED
+# Note to I think Dania: Data is a generic parameter. It does not need to be defined outside the class. When we use it,
+# we provide the type for Data like so: OptimizerGuess[float] or OptimizerGuess[bitstring_10] etc. etc.
+class OptimizerGuess[Data]:
     """
     A class representing an optimizer guess. It contains the guessed point, the cost function at the point, and some
     data for the guess, and can be partially ordered
@@ -113,6 +115,40 @@ class Optimizer[Data]:
         Evaluates the given point and returns an OptimizerGuess object representing the result
         """
         return self._cost_function(point)
+
+
+class QiskitAlgorithmGradientDescent(Optimizer):
+    def __init__(
+            self,
+            cost_function: cost_function_t,
+            cost_cutoff: float,
+            initial_point: ndarray,
+            learning_rate: float
+    ):
+        from qiskit_algorithms.optimizers import GradientDescent
+
+        super().__init__(cost_function, cost_cutoff)
+
+        self.qiskit_optimizer = GradientDescent(learning_rate=learning_rate)
+        self.qiskit_optimizer.start(self._get_cost_fun_for_qiskit(), initial_point)
+
+    def _get_cost_fun_for_qiskit(self):
+        def cost_function(point: ndarray) -> float:
+            return self._cost_function(point).cost
+
+        return cost_function
+
+    def _next_guess(self) -> OptimizerGuess:
+        ask_data = self.qiskit_optimizer.ask()
+        point: ndarray = ask_data.x_fun
+
+        tell_data = self.qiskit_optimizer.evaluate(ask_data=ask_data)
+        cost: float = tell_data.eval_fun
+
+
+        self.qiskit_optimizer.tell(ask_data=ask_data, tell_data=tell_data)
+
+        pass
 
 
 class OriginalGradientDescentOptimizer[Data](Optimizer[Data]):
