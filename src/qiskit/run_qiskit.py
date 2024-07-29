@@ -1,13 +1,15 @@
 from qiskit import QuantumRegister
+from qiskit_aer import AerSimulator
 from qiskit_aer.primitives import Estimator as AerEstimator
 from qiskit_algorithms import VQE
-from qiskit_algorithms.optimizers import SPSA, GradientDescent, NELDER_MEAD
+from qiskit_algorithms.optimizers import GradientDescent, NELDER_MEAD
 from qiskit_algorithms.utils import algorithm_globals
 
 from CostFunctionQiskit import get_hamil_pauli_op
 from VQE_circuit_for_qiskit import VQE_circuit_qiskit
 from classical.S_DES import *
 from classical.util import *
+from quantum.QuantumSDES import QuantumSDES
 
 counts = []
 values = []
@@ -54,8 +56,12 @@ if __name__ == "__main__":
     hamiltonian = get_hamil_pauli_op(known_ciphertext=known_ciphertext)
     print(f"Number of qubits: {hamiltonian.num_qubits}")
     ansatz = circuit
-    gd = GradientDescent(maxiter=20, learning_rate=0.01)
+    circuit_with_measurements = circuit.copy()
+    circuit_with_measurements.measure_all()
+
+    gd = GradientDescent(maxiter=4000, learning_rate=0.05)
     nm = NELDER_MEAD(maxiter=None, maxfev=1000, disp=False, xatol=0.0001)
+
     seed = 170
     algorithm_globals.random_seed = seed
 

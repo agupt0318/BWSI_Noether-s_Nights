@@ -23,15 +23,22 @@ def run():
         known_plaintext,
         known_ciphertext,
         hamiltonian,
-        shots_per_estimate=10,
+        shots_per_estimate=1024,
         find_solution_by_lucky_measurement=False
     )
     #
-    optimizer: Optimizer = GradientDescentOptimizer(
+    # optimizer: Optimizer[bitstring_10] = GradientDescentOptimizer(
+    #     cost_function=lambda x: vqe_solver.run(x),
+    #     cost_cutoff=-9,
+    #     initial_point=np.array([1] + ([0] * 9), dtype=float),
+    #     learning_rate=0.01
+    # )
+
+    optimizer: Optimizer[bitstring_10] = QiskitAlgorithmGradientDescent(
         cost_function=lambda x: vqe_solver.run(x),
         cost_cutoff=-9,
         initial_point=np.array([1] + ([0] * 9), dtype=float),
-        learning_rate=1.08
+        learning_rate=0.01
     )
 
     # optimizer: Optimizer = AdaGradOptimizer(
@@ -102,7 +109,8 @@ def run():
     plt.show()
 
     if type(optimizer) is NelderMeadOptimizer:
-        optimizer: NelderMeadOptimizer = optimizer
+        # noinspection PyTypeChecker
+        optimizer: NelderMeadOptimizer[bitstring_10] = optimizer
 
         fig, ax = plt.subplots()
         ax.plot(optimizer.volume_history)

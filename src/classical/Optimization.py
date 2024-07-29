@@ -117,7 +117,7 @@ class Optimizer[Data]:
         return self._cost_function(point)
 
 
-class QiskitAlgorithmGradientDescent(Optimizer):
+class QiskitAlgorithmGradientDescent[Data](Optimizer[Data]):
     def __init__(
             self,
             cost_function: cost_function_t,
@@ -125,6 +125,7 @@ class QiskitAlgorithmGradientDescent(Optimizer):
             initial_point: ndarray,
             learning_rate: float
     ):
+        self.initial_point = initial_point.copy()
         from qiskit_algorithms.optimizers import GradientDescent
 
         super().__init__(cost_function, cost_cutoff)
@@ -138,17 +139,17 @@ class QiskitAlgorithmGradientDescent(Optimizer):
 
         return cost_function
 
-    def _next_guess(self) -> OptimizerGuess:
+    def _next_guess(self) -> OptimizerGuess[Data]:
         ask_data = self.qiskit_optimizer.ask()
         point: ndarray = ask_data.x_fun
 
         tell_data = self.qiskit_optimizer.evaluate(ask_data=ask_data)
-        cost: float = tell_data.eval_fun
-
-
         self.qiskit_optimizer.tell(ask_data=ask_data, tell_data=tell_data)
 
-        pass
+        if point is not None:
+            return self._cost_function(point)
+        else:
+            return self._cost_function(self.initial_point)
 
 
 class OriginalGradientDescentOptimizer[Data](Optimizer[Data]):
@@ -311,7 +312,7 @@ class AdaGradOptimizer[Data](GradientDescentOptimizer[Data]):
 
 
 # Nelder-Mead optimization algorithm, as described by Wikipedia
-class NelderMeadOptimizer(Optimizer):
+class NelderMeadOptimizer[Data](Optimizer[Data]):
     def __init__(
             self,
             cost_function: cost_function_t,
@@ -356,7 +357,7 @@ class NelderMeadOptimizer(Optimizer):
             result += guess.point
         return result / len(guesses)
 
-    def _next_guess(self) -> OptimizerGuess:
+    def _next_guess(self) -> OptimizerGuess[Data]:
         # DEBUG: simplex volume
         vol = math.log(abs(np.linalg.det(
             np.array([[*g.point, 1] for g in self.guesses])
