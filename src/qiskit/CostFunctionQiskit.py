@@ -70,7 +70,7 @@ def get_isa_circuit(circuit: QuantumCircuit):
 
 def get_hamil_pauli_op(known_ciphertext):
     graph = rx.PyGraph()
-    graph.add_nodes_from(np.arange(0, 18, 1))
+    graph.add_nodes_from(np.arange(0, 10, 1))
     edge_list = generate_regular_graph_edges(3, 8)
     pair_terms, single_terms = construct_hamiltonian_from_graph(known_ciphertext, edge_list)
     graph.add_edges_from(pair_terms)
