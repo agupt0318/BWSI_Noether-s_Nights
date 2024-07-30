@@ -72,6 +72,23 @@ if __name__ == "__main__":
     vqe = VQE(noiseless_estimator, ansatz, optimizer=nm, callback=store_intermediate_result)
     result = vqe.compute_minimum_eigenvalue(operator=hamiltonian)
 
+    measurements = AerSimulator().run(
+        circuit_with_measurements.assign_parameters(result.optimal_point),
+        shots=100,
+        memory=True
+    ).result().get_memory()
+
+    # Calculate expected value of hamiltonian
+    total = 0
+    ciphertexts_found: dict[str, int] = dict()
+    for measurement in measurements:
+        measured_measurement = bits_to_string(QuantumSDES.get_message_from_measurement(measurement))
+        if measured_measurement not in ciphertexts_found:
+            ciphertexts_found[measured_measurement] = 0
+        ciphertexts_found[measured_measurement] += 1
+
+    print(ciphertexts_found)
+
     print(f"VQE on Aer qasm simulator (no noise): {result.eigenvalue.real:.5f}")
 
     pylab.rcParams["figure.figsize"] = (12, 4)
