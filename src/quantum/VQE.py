@@ -1,82 +1,45 @@
-from typing import Union
+import random
 
 from numpy import ndarray
-from qiskit import QuantumCircuit, QuantumRegister
-from qiskit.circuit import Parameter
-from qiskit_aer import AerSimulator
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import SparsePauliOp
+from qiskit_aer.primitives import Estimator as AerEstimator
 
-from classical.Optimization import OptimizerGuess
-from classical.S_DES import bitstring_8
-from classical.util import bitstring_10, bits_from_string, bits_to_string
-from quantum.QuantumSDES import QuantumSDES
-from quantum.ansatz import A_ansatz_Y_Cz_model
-from quantum.util import write_classical_data, Hamiltonian
+from classical.Optimization import CostFunctionEvaluation
+from classical.util import bitstring_10, bits_from_string
 
 
-class VQE_crypto(QuantumCircuit):
+class VariationalQuantumEigensolver:
     def __init__(
             self,
-            known_plaintext: bitstring_8,
-            known_ciphertext: bitstring_8,
-            hamiltonian: Hamiltonian,
+            ansatz: QuantumCircuit,
+            hamiltonian_operator: SparsePauliOp,
             shots_per_estimate: int = 20,
-            find_solution_by_lucky_measurement: bool = True,
+            seed: int | None = 170,
     ):
-        self.hamiltonian = hamiltonian
-        self.shots_per_estimate = shots_per_estimate
-        self.known_ciphertext = known_ciphertext
-        self.find_solution_by_lucky_measurement = find_solution_by_lucky_measurement
+        self.ansatz = ansatz
 
-        key_register = self.key_register = QuantumRegister(10)
-        text_register = self.text_register = QuantumRegister(8)
+        self.hamiltonian_op = hamiltonian_operator
 
-        super().__init__(key_register, text_register)
+        self.seed = seed if seed is not None else random.randint(0, 0xffffffff)
 
-        self.ansatz_parameters = [Parameter(f'ansatz_param_{i}') for i in range(10)]
-        self.compose(A_ansatz_Y_Cz_model(self.ansatz_parameters), key_register, inplace=True)
+        self.estimator = AerEstimator(
+            run_options={"seed": seed, "shots": shots_per_estimate},
+            transpile_options={"seed_transpiler": seed},
+        )
 
-        write_classical_data(list(known_plaintext), self, target_qubits=list(text_register))
+    def evaluate_cost(self, ansatz_parameter_values: ndarray) -> CostFunctionEvaluation[bitstring_10]:
+        assert len(ansatz_parameter_values) == self.ansatz.num_parameters
 
-        self.barrier()
-        self.compose(QuantumSDES(key=key_register, data=text_register), inplace=True)
-        self.barrier()
-
-        self.measure_all()
-
-        self.solution: Union[None, bitstring_10] = None
-        # noinspection PyTypeChecker
-        self.simulator = AerSimulator(method="statevector")
-
-    def run(self, ansatz_parameter_values: ndarray) -> OptimizerGuess[bitstring_10]:
-        measurements = self.simulator.run(
-            self.assign_parameters(ansatz_parameter_values),
-            shots=self.shots_per_estimate,
-            memory=True
-        ).result().get_memory()
-
-        # Calculate expected value of hamiltonian
-        total = 0
-        keys_found: dict[str, int] = dict()
-        for measurement in measurements:
-
-            measured_key_str = bits_to_string(QuantumSDES.get_key_from_measurement(measurement))
-            measured_data_bits = QuantumSDES.get_message_from_measurement(measurement)
-
-            if self.find_solution_by_lucky_measurement and measured_data_bits == self.known_ciphertext:
-                self.solution = bits_from_string(measured_key_str)
-
-            total += self.hamiltonian.calculate(list(measured_data_bits))
-            if measured_key_str not in keys_found:
-                keys_found[measured_key_str] = 0
-            keys_found[measured_key_str] += 1
-
-        expected_value_of_hamiltonian = total / len(measurements)
-
-        most_common_key = max(keys_found.keys(), key=lambda k: keys_found[k])
+        estimator_results = self.estimator.run(
+            self.ansatz,
+            self.hamiltonian_op,
+            ansatz_parameter_values
+        ).result()
 
         # noinspection PyTypeChecker
-        return OptimizerGuess(
+        return CostFunctionEvaluation(
             ansatz_parameter_values.copy(),
-            expected_value_of_hamiltonian,
-            bits_from_string(most_common_key)
+            estimator_results.values[0],
+            bits_from_string("0000000000")
         )

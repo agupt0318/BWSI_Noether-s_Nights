@@ -6,11 +6,12 @@ from typing import Callable, Union
 
 import numpy as np
 from numpy import ndarray
+from numpy.linalg import norm
 
 
 # Note to I think Dania: Data is a generic parameter. It does not need to be defined outside the class. When we use it,
 # we provide the type for Data like so: OptimizerGuess[float] or OptimizerGuess[bitstring_10] etc. etc.
-class OptimizerGuess[Data]:
+class CostFunctionEvaluation[Data]:
     """
     A class representing an optimizer guess. It contains the guessed point, the cost function at the point, and some
     data for the guess, and can be partially ordered
@@ -42,7 +43,7 @@ class OptimizerGuess[Data]:
         return not (self == other)
 
 
-type cost_function_t[Data] = Callable[[ndarray], OptimizerGuess[Data]]
+type cost_function_t[Data] = Callable[[ndarray], CostFunctionEvaluation[Data]]
 
 
 class Optimizer[Data]:
@@ -60,9 +61,9 @@ class Optimizer[Data]:
         self._cost_cutoff = cost_cutoff
 
         # The current best point
-        self._best_guess: Union[OptimizerGuess, None] = None
+        self._best_guess: Union[CostFunctionEvaluation, None] = None
         # The history of guesses, used for debug purposes
-        self._history: list[OptimizerGuess] = []
+        self._history: list[CostFunctionEvaluation] = []
         # Whether the optimization algorithm has terminated
         self._finished = False
 
@@ -102,7 +103,7 @@ class Optimizer[Data]:
         return self._finished
 
     @abc.abstractmethod
-    def _next_guess(self) -> OptimizerGuess:
+    def _next_guess(self) -> CostFunctionEvaluation:
         """
         This method should be overridden by subclasses and represents one step of iteration in the optimization
         algorithm. It should return a new guess, which is hopefully better than the last guess
@@ -110,110 +111,11 @@ class Optimizer[Data]:
         """
         raise NotImplementedError("Subclasses must implement this method")
 
-    def evaluate_point(self, point: ndarray) -> OptimizerGuess[Data]:
+    def evaluate_point(self, point: ndarray) -> CostFunctionEvaluation[Data]:
         """
         Evaluates the given point and returns an OptimizerGuess object representing the result
         """
         return self._cost_function(point)
-
-
-class QiskitAlgorithmGradientDescent[Data](Optimizer[Data]):
-    def __init__(
-            self,
-            cost_function: cost_function_t,
-            cost_cutoff: float,
-            initial_point: ndarray,
-            learning_rate: float
-    ):
-        self.initial_point = initial_point.copy()
-        from qiskit_algorithms.optimizers import GradientDescent
-
-        super().__init__(cost_function, cost_cutoff)
-
-        self.qiskit_optimizer = GradientDescent(learning_rate=learning_rate)
-        self.qiskit_optimizer.start(self._get_cost_fun_for_qiskit(), initial_point)
-
-    def _get_cost_fun_for_qiskit(self):
-        def cost_function(point: ndarray) -> float:
-            return self._cost_function(point).cost
-
-        return cost_function
-
-    def _next_guess(self) -> OptimizerGuess[Data]:
-        ask_data = self.qiskit_optimizer.ask()
-        point: ndarray = ask_data.x_fun
-
-        tell_data = self.qiskit_optimizer.evaluate(ask_data=ask_data)
-        self.qiskit_optimizer.tell(ask_data=ask_data, tell_data=tell_data)
-
-        if point is not None:
-            return self._cost_function(point)
-        else:
-            return self._cost_function(self.initial_point)
-
-
-class OriginalGradientDescentOptimizer[Data](Optimizer[Data]):
-    def __init__(
-            self,
-            cost_function: cost_function_t[Data],
-            cost_cutoff: float,
-            initial_point: ndarray,
-            learning_rate: float
-    ):
-        super().__init__(cost_function, cost_cutoff)
-
-        # The current point in gradient descent
-        self.current_point = initial_point
-        # A constant controlling the step size in gradient descent
-        self.learning_rate = learning_rate
-
-        # The dimensionality of the search space
-        self.dimensionality = len(initial_point)
-
-        self.adaptive_factor = 0
-
-    def _calculate_gradient_at_point(
-            self,
-            point: ndarray,
-            cost_at_point: float
-    ):
-        epsilon = 0.01  # small step size for calculating the approximate gradient
-
-        gradient = np.zeros(self.dimensionality)
-        for i in range(self.dimensionality):
-            # Calculate a point a small step away in the ith direction
-            adjusted_point = point.copy()
-            adjusted_point[i] += epsilon
-            # Approximate the gradient in the ith direction using the difference quotient
-            cost_at_adjusted_point = self.evaluate_point(adjusted_point).cost
-            gradient[i] = (cost_at_adjusted_point - cost_at_point) / epsilon
-
-        return gradient
-
-    def _next_guess(self) -> OptimizerGuess:
-        self.adaptive_factor += 1 + self.dimensionality
-
-        guess = self.evaluate_point(self.current_point)
-
-        gradient = self._calculate_gradient_at_point(guess.point, guess.cost)
-
-        try:
-            # Calculate the adaptive step size
-            step_size = (
-                    self.learning_rate / abs(guess.cost - self._cost_cutoff)
-                    + np.random.uniform(0, 1) * np.log(self.adaptive_factor) / self.adaptive_factor
-            )
-
-            # If the gradient is too low, generate a new random guess
-            if sum(gradient ** 2) ** 0.5 < 0.8:
-                # print('Generated new random guess')
-                self.current_point = np.random.uniform(-1, 1, self.dimensionality)
-                self.adaptive_factor = 0
-            # Otherwise Update the guess based on the gradient
-            else:
-                self.current_point -= gradient * step_size
-        finally:
-            return guess
 
 
 class GradientDescentOptimizer[Data](Optimizer[Data]):
@@ -222,7 +124,8 @@ class GradientDescentOptimizer[Data](Optimizer[Data]):
             cost_function: cost_function_t[Data],
             cost_cutoff: float,
             initial_point: ndarray,
-            learning_rate: float
+            learning_rate: float,
+            gradient_cutoff: float = 0.8
     ):
         super().__init__(cost_function, cost_cutoff)
 
@@ -230,6 +133,8 @@ class GradientDescentOptimizer[Data](Optimizer[Data]):
         self.current_point = initial_point
         # A constant controlling the step size in gradient descent
         self.learning_rate = learning_rate
+        # A cutoff value below which gradient descent picks a new random guess
+        self.gradient_cutoff = gradient_cutoff
 
         # The dimensionality of the search space
         self.dimensionality = len(initial_point)
@@ -252,7 +157,7 @@ class GradientDescentOptimizer[Data](Optimizer[Data]):
 
         return gradient
 
-    def _next_guess(self) -> OptimizerGuess:
+    def _next_guess(self) -> CostFunctionEvaluation:
         guess = self.evaluate_point(self.current_point)
 
         gradient = self._calculate_gradient_at_point(guess.point, guess.cost)
@@ -262,51 +167,13 @@ class GradientDescentOptimizer[Data](Optimizer[Data]):
             step_size = self.learning_rate / abs(guess.cost - self._cost_cutoff)
 
             # If the gradient is too low, generate a new random guess
-            if sum(gradient ** 2) ** 0.5 < 0.8:
-                # print('Generated new random guess')
+            if norm(gradient) < self.gradient_cutoff:
+                print('Generated new random guess')
                 self.current_point = np.random.uniform(-1, 1, self.dimensionality)
                 self.adaptive_factor = 0
             # Otherwise Update the guess based on the gradient
             else:
                 self.current_point -= gradient * step_size
-        finally:
-            return guess
-
-
-class AdaGradOptimizer[Data](GradientDescentOptimizer[Data]):
-    def __init__(
-            self,
-            cost_function: cost_function_t[Data],
-            cost_cutoff: float,
-            initial_point: ndarray,
-            learning_rate: float,
-            adagrad_factor: float,
-    ):
-        super().__init__(cost_function, cost_cutoff, initial_point, learning_rate)
-
-        # Adaptive gradient
-        self.adagrad_factor = adagrad_factor
-        self.adagrad_ss = np.zeros(self.dimensionality)
-
-    def _next_guess(self) -> OptimizerGuess:
-        guess = self.evaluate_point(self.current_point)
-
-        gradient = self._calculate_gradient_at_point(guess.point, guess.cost)
-
-        self.adagrad_ss += gradient * gradient
-
-        try:
-            # Calculate the adaptive step size
-            step_size = self.learning_rate
-
-            # If the gradient is too low, generate a new random guess
-            if sum(gradient ** 2) ** 0.5 < 0.8:
-                # print('Generated new random guess')
-                self.current_point = np.random.uniform(-1, 1, self.dimensionality)
-                self.adaptive_factor = 0
-            # Otherwise Update the guess based on the gradient
-            else:
-                self.current_point -= gradient * step_size / (1 + self.adagrad_factor * np.sqrt(self.adagrad_ss))
         finally:
             return guess
 
@@ -337,11 +204,11 @@ class NelderMeadOptimizer[Data](Optimizer[Data]):
         self.sigma = sigma
 
         # The candidate points and their costs
-        self.guesses: list[OptimizerGuess] = self.generate_random_guesses()
+        self.guesses: list[CostFunctionEvaluation] = self.generate_random_guesses()
 
         self.volume_history = []
 
-    def generate_random_guesses(self) -> list[OptimizerGuess]:
+    def generate_random_guesses(self) -> list[CostFunctionEvaluation]:
         points = self.random_simplex_generator()
 
         # Make sure that points form a simplex
@@ -351,13 +218,13 @@ class NelderMeadOptimizer[Data](Optimizer[Data]):
 
         return [self.evaluate_point(guess) for guess in points]
 
-    def _get_centroid(self, guesses: list[OptimizerGuess]) -> ndarray:
+    def _get_centroid(self, guesses: list[CostFunctionEvaluation]) -> ndarray:
         result = np.zeros(self.dimensionality)
         for guess in guesses:
             result += guess.point
         return result / len(guesses)
 
-    def _next_guess(self) -> OptimizerGuess[Data]:
+    def _next_guess(self) -> CostFunctionEvaluation[Data]:
         # DEBUG: simplex volume
         vol = math.log(abs(np.linalg.det(
             np.array([[*g.point, 1] for g in self.guesses])

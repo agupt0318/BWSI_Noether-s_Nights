@@ -31,7 +31,7 @@ def color(iterations_percent):
 class test_Optimization(unittest.TestCase):
     @staticmethod
     def create_cost_function(func: testFunction) -> cost_function_t[None]:
-        return lambda x: OptimizerGuess(x.copy(), func(x), None)
+        return lambda x: CostFunctionEvaluation(x.copy(), func(x), None)
 
     def test_gradient_descent(self):
         s = 10

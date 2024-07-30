@@ -69,7 +69,7 @@ if __name__ == "__main__":
         run_options={"seed": seed, "shots": 1024},
         transpile_options={"seed_transpiler": seed},
     )
-    vqe = VQE(noiseless_estimator, ansatz, optimizer=nm, callback=store_intermediate_result)
+    vqe = VQE(noiseless_estimator, ansatz, optimizer=gd, callback=store_intermediate_result)
     result = vqe.compute_minimum_eigenvalue(operator=hamiltonian)
 
     measurements = AerSimulator().run(
