@@ -42,7 +42,7 @@ def construct_hamiltonian_from_graph(V, edges) -> Hamiltonian:
         for (wij, i, j) in pair_terms:
             result += wij * measurement[i] * measurement[j]
         for (ti, i) in single_terms:
-            result += ti * measurement[i]
+            result -= ti * measurement[i]
 
         return result
 

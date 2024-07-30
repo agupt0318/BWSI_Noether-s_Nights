@@ -6,10 +6,10 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit_aer.primitives import Estimator as AerEstimator
 
 from classical.Optimization import CostFunctionEvaluation
-from classical.util import bitstring_10, bits_from_string
+from classical.util import bitstring_10
 
 
-class VariationalQuantumEigensolver:
+class HamiltonianEstimator:
     def __init__(
             self,
             ansatz: QuantumCircuit,
@@ -31,15 +31,17 @@ class VariationalQuantumEigensolver:
     def evaluate_cost(self, ansatz_parameter_values: ndarray) -> CostFunctionEvaluation[bitstring_10]:
         assert len(ansatz_parameter_values) == self.ansatz.num_parameters
 
-        estimator_results = self.estimator.run(
+        estimator_result = self.estimator.run(
             self.ansatz,
             self.hamiltonian_op,
             ansatz_parameter_values
         ).result()
 
+        hamiltonian_expectation_value: float = estimator_result.values[0]
+
         # noinspection PyTypeChecker
         return CostFunctionEvaluation(
             ansatz_parameter_values.copy(),
-            estimator_results.values[0],
-            bits_from_string("0000000000")
+            hamiltonian_expectation_value,
+            tuple([False] * 10)
         )

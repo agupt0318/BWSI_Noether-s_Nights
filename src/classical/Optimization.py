@@ -187,9 +187,10 @@ class NelderMeadOptimizer[Data](Optimizer[Data]):
             dimensionality: int,
             random_simplex_generator: Callable[[], list[ndarray]],
             alpha: float = 1,
-            gamma: float = 2,  # This is the value used in the paper
-            rho: float = 0.5,  # I think this is the value used in the paper
-            sigma: float = .5  # TODO: look up the value used in the paper
+            gamma: float = 2,
+            rho: float = 0.5,
+            sigma: float = .5,
+            range_cutoff: float = 0.15
     ):
         super().__init__(cost_function, cost_cutoff)
 
@@ -202,6 +203,9 @@ class NelderMeadOptimizer[Data](Optimizer[Data]):
         self.gamma = gamma
         self.rho = rho
         self.sigma = sigma
+
+        # If the difference between the best and worst cost is less than this number, generates a new guess.
+        self.range_cutoff = range_cutoff
 
         # The candidate points and their costs
         self.guesses: list[CostFunctionEvaluation] = self.generate_random_guesses()
@@ -241,21 +245,21 @@ class NelderMeadOptimizer[Data](Optimizer[Data]):
         worst = self.guesses[-1]
         second_worst = self.guesses[-2]
 
-        if worst.cost - best.cost < 0.15:
-            # print('Generated new random guess')
+        # Check the range of the cost function. If this is
+        if worst.cost - best.cost < self.range_cutoff:
             self.guesses = self.generate_random_guesses()
             return best
 
         # Calculate the centroid (average, "center of mass") of all points other than the current worst point
-        centroid_point = self._get_centroid(self.guesses[:-1])
+        centroid = self.evaluate_point(self._get_centroid(self.guesses[:-1]))
 
         # Reflect the centroid across the current worst point.
-        reflected = self.evaluate_point(centroid_point + self.alpha * (centroid_point - worst.point))
+        reflected = self.evaluate_point(centroid.point + self.alpha * (centroid.point - worst.point))
 
         # If the reflected point is the best point so far,
         if reflected < best:
             # We can consider a point even further in the direction of the reflected point
-            expanded = self.evaluate_point(centroid_point + self.gamma * (reflected.point - centroid_point))
+            expanded = self.evaluate_point(centroid.point + self.gamma * (reflected.point - centroid.point))
             # Replace the worst point with the expanded point or the reflected point, whichever one is better.
             self.guesses[-1] = min(expanded, reflected)
 
@@ -268,7 +272,7 @@ class NelderMeadOptimizer[Data](Optimizer[Data]):
             contraction_base = min(reflected, self.guesses[-1])
 
             # Contract. This moves the centroid towards the contraction base
-            contracted = self.evaluate_point(centroid_point + self.rho * (contraction_base.point - centroid_point))
+            contracted = self.evaluate_point(centroid.point + self.rho * (contraction_base.point - centroid.point))
 
             # If the contracted point is less than the contracted base point, add it to the end of guesses
             if contracted < contraction_base:

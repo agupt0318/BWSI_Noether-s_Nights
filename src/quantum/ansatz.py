@@ -1,73 +1,50 @@
 from qiskit import QuantumCircuit, QuantumRegister
-from qiskit.circuit import Parameter, ParameterVector
+from qiskit.circuit import Parameter, Gate
+from qiskit.circuit.library import CZGate, CXGate, CYGate
 
 
-def A_ansatz_Y_Cx_model(theta_list):
-    register = QuantumRegister(10)
-    circuit = QuantumCircuit(register)
-    for i in range(10):
-        circuit.h(i)
-        circuit.ry(theta_list[i], i)
-        if i != 9:
-            circuit.cx(i, i + 1)
-    circuit.cx(9, 0)
-    return circuit
+class Ansatz(QuantumCircuit):
+    def __init__(self, num_qubits: int, ansatz_type: str):
+        gate, circular = Ansatz.interpret_ansatz_type(ansatz_type)
 
+        register = QuantumRegister(num_qubits)
+        super().__init__(register)
 
-def A_ansatz_Y_Cy_model(theta_list):
-    register = QuantumRegister(10)
-    circuit = QuantumCircuit(register)
-    for i in range(10):
-        circuit.h(i)
-        circuit.ry(theta_list[i], i)
-        if i != 9:
-            circuit.cy(i, i + 1)
-    circuit.cy(9, 0)
-    return circuit
+        for i in range(num_qubits):
+            self.h(register[i])
+            self.ry(Parameter(f'theta_{i}'), register[i])
 
+            if i == num_qubits - 1:
+                if circular:
+                    self.cz(register[i], register[0])
+            else:
+                self.append(
+                    gate,
+                    qargs=[register[i], register[i + 1]],
+                    cargs=[],
+                    copy=True
+                )
 
-# This is the one we are using
-def A_ansatz_Y_Cz_model():
-    register = QuantumRegister(10)
-    circuit = QuantumCircuit(register)
+    @staticmethod
+    def interpret_ansatz_type(ansatz_type: str) -> tuple[Gate, bool]:
+        circular = False
 
-    for i in range(10):
-        circuit.h(i)
-        circuit.ry(Parameter(f'theta_{i}'), i)
-        if i != 9:
-            circuit.cz(i, i + 1)
-    circuit.cz(9, 0)
-    return circuit
+        if ansatz_type == 'A-CX':
+            gate = CXGate()
+            circular = True
+        elif ansatz_type == 'A-CY':
+            gate = CYGate()
+            circular = True
+        elif ansatz_type == 'A-CZ':
+            gate = CZGate()
+            circular = True
+        elif ansatz_type == 'B-CX':
+            gate = CXGate()
+        elif ansatz_type == 'B-CY':
+            gate = CYGate()
+        elif ansatz_type == 'B-CZ':
+            gate = CZGate()
+        else:
+            raise ValueError(f'Invalid ansatz type: {ansatz_type}')
 
-
-def B_ansatz_Y_Cx_model(theta_list):
-    register = QuantumRegister(10)
-    circuit = QuantumCircuit(register)
-    for i in range(10):
-        circuit.h(i)
-        circuit.ry(theta_list[i], i)
-        if i != 9:
-            circuit.cx(i, i + 1)
-    return circuit
-
-
-def B_ansatz_Y_Cy_model(theta_list):
-    register = QuantumRegister(10)
-    circuit = QuantumCircuit(register)
-    for i in range(10):
-        circuit.h(i)
-        circuit.ry(theta_list[i], i)
-        if i != 9:
-            circuit.cy(i, i + 1)
-    return circuit
-
-
-def B_ansatz_Y_Cz_model(theta_list):
-    register = QuantumRegister(10)
-    circuit = QuantumCircuit(register)
-    for i in range(10):
-        circuit.h(i)
-        circuit.ry(theta_list[i], i)
-        if i != 9:
-            circuit.cz(i, i + 1)
-    return circuit
+        return gate, circular
